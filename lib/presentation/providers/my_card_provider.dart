@@ -44,6 +44,7 @@ class MyCardProvider extends ChangeNotifier {
   double _photoSize = 56.0;
   Map<String, double> _textSizes = {};
   bool _showIcons = true;
+  String? _selectedField;
 
   bool _isLoading = false;
   String? _error;
@@ -64,6 +65,7 @@ class MyCardProvider extends ChangeNotifier {
   double get photoSize => _photoSize;
   Map<String, double> get textSizes => _textSizes;
   bool get showIcons => _showIcons;
+  String? get selectedField => _selectedField;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
@@ -142,6 +144,11 @@ class MyCardProvider extends ChangeNotifier {
 
   void setShowIcons(bool show) {
     _showIcons = show;
+    notifyListeners();
+  }
+
+  void selectField(String? field) {
+    _selectedField = field;
     notifyListeners();
   }
 
@@ -424,6 +431,7 @@ class MyCardProvider extends ChangeNotifier {
       _photoSize = 56.0;
       _textSizes = {};
       _showIcons = true;
+      _selectedField = null;
       _visibleFields = {
         'name': true,
         'title': true,

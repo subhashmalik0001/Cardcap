@@ -31,6 +31,8 @@ class CardCanvas extends StatelessWidget {
   final Map<String, double> textSizes;
   final Function(double)? onResizePhoto;
   final Function(String, double)? onResizeField;
+  final String? selectedField;
+  final Function(String?)? onSelectField;
 
   const CardCanvas({
     super.key,
@@ -52,6 +54,8 @@ class CardCanvas extends StatelessWidget {
     this.textSizes = const {},
     this.onResizePhoto,
     this.onResizeField,
+    this.selectedField,
+    this.onSelectField,
   });
 
   Offset _getFieldPosition(String key, double cardWidth, double cardHeight) {
@@ -166,12 +170,18 @@ class CardCanvas extends StatelessWidget {
                     size: photoSize,
                     position: _getFieldPosition('photo', cardWidth, cardHeight),
                     onDragEnd: (offset) => onUpdatePosition('photo', offset),
-                    onTap: onPhotoTap,
+                    onTap: () {
+                      onPhotoTap();
+                      if (isDesignerMode && onSelectField != null) {
+                        onSelectField!('photo');
+                      }
+                    },
                     canvasKey: canvasKey,
                     cardWidth: cardWidth,
                     cardHeight: cardHeight,
                     isDesignerMode: isDesignerMode,
-                    onResize: onResizePhoto,
+                    onResizeEnd: onResizePhoto,
+                    isSelected: selectedField == 'photo',
                   ),
 
                 // 3. Text Fields Layers
@@ -206,7 +216,13 @@ class CardCanvas extends StatelessWidget {
                       cardHeight: cardHeight,
                       isDesignerMode: isDesignerMode,
                       fontSize: fieldFontSize,
-                      onResize: onResizeField != null ? (newSize) => onResizeField!(key, newSize) : null,
+                      onResizeEnd: onResizeField != null ? (newSize) => onResizeField!(key, newSize) : null,
+                      isSelected: selectedField == key,
+                      onTap: () {
+                        if (isDesignerMode && onSelectField != null) {
+                          onSelectField!(key);
+                        }
+                      },
                     );
                   }
                   return const SizedBox.shrink();

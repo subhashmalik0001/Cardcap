@@ -32,9 +32,11 @@ class _CardDesignerScreenState extends State<CardDesignerScreen> {
   @override
   void initState() {
     super.initState();
-    // Default ratio to standard on entry
+    // Default ratio to standard on entry and clear selection
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MyCardProvider>().setCardRatio('standard');
+      final provider = context.read<MyCardProvider>();
+      provider.setCardRatio('standard');
+      provider.selectField(null);
     });
   }
 
@@ -345,6 +347,10 @@ class _CardDesignerScreenState extends State<CardDesignerScreen> {
 
   Future<void> _save() async {
     if (_isSaving) return;
+    
+    // Clear selection so handles/outline deselect instantly
+    context.read<MyCardProvider>().selectField(null);
+
     setState(() {
       _isSaving = true;
       _isCapturing = true;
@@ -747,32 +753,40 @@ class _CardDesignerScreenState extends State<CardDesignerScreen> {
                   ),
 
                   // 2. Design canvas inside RepaintBoundary
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: RepaintBoundary(
-                      key: _cardKey,
-                      child: CardCanvas(
-                        key: _canvasKey,
-                        template: provider.template,
-                        fields: provider.visibleFields,
-                        fieldPositions: provider.fieldPositions,
-                        userPhoto: provider.userPhoto,
-                        photoUrl: provider.photoUrl,
-                        photoShape: provider.photoShape,
-                        userDetails: provider.details ?? const MyCardDetails(name: ''),
-                        textColor: provider.textColor,
-                        cardRatio: provider.cardRatio,
-                        onUpdatePosition: (field, offset) {
-                          provider.updateFieldPosition(field, offset);
-                        },
-                        onPhotoTap: _showPhotoOptions,
-                        canvasKey: _canvasKey,
-                        isDesignerMode: !_isCapturing,
-                        showIcons: provider.showIcons,
-                        photoSize: provider.photoSize,
-                        textSizes: provider.textSizes,
-                        onResizePhoto: (newSize) => provider.setPhotoSize(newSize),
-                        onResizeField: (field, newSize) => provider.updateTextSize(field, newSize),
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      provider.selectField(null);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: RepaintBoundary(
+                        key: _cardKey,
+                        child: CardCanvas(
+                          key: _canvasKey,
+                          template: provider.template,
+                          fields: provider.visibleFields,
+                          fieldPositions: provider.fieldPositions,
+                          userPhoto: provider.userPhoto,
+                          photoUrl: provider.photoUrl,
+                          photoShape: provider.photoShape,
+                          userDetails: provider.details ?? const MyCardDetails(name: ''),
+                          textColor: provider.textColor,
+                          cardRatio: provider.cardRatio,
+                          onUpdatePosition: (field, offset) {
+                            provider.updateFieldPosition(field, offset);
+                          },
+                          onPhotoTap: _showPhotoOptions,
+                          canvasKey: _canvasKey,
+                          isDesignerMode: !_isCapturing,
+                          showIcons: provider.showIcons,
+                          photoSize: provider.photoSize,
+                          textSizes: provider.textSizes,
+                          onResizePhoto: (newSize) => provider.setPhotoSize(newSize),
+                          onResizeField: (field, newSize) => provider.updateTextSize(field, newSize),
+                          selectedField: provider.selectedField,
+                          onSelectField: (field) => provider.selectField(field),
+                        ),
                       ),
                     ),
                   ),

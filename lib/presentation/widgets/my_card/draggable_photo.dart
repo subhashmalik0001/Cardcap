@@ -4,7 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:card_capture/presentation/providers/my_card_provider.dart';
 import 'hexagon_clipper.dart';
 
-class DraggablePhoto extends StatelessWidget {
+class DraggablePhoto extends StatefulWidget {
   final File? photo;
   final String? photoUrl;
   final PhotoShape shape;
@@ -16,7 +16,8 @@ class DraggablePhoto extends StatelessWidget {
   final double cardWidth;
   final double cardHeight;
   final bool isDesignerMode;
-  final Function(double)? onResize;
+  final Function(double)? onResizeEnd;
+  final bool isSelected;
 
   const DraggablePhoto({
     super.key,
@@ -31,56 +32,86 @@ class DraggablePhoto extends StatelessWidget {
     required this.cardWidth,
     required this.cardHeight,
     this.isDesignerMode = false,
-    this.onResize,
+    this.onResizeEnd,
+    required this.isSelected,
   });
+
+  @override
+  State<DraggablePhoto> createState() => _DraggablePhotoState();
+}
+
+class _DraggablePhotoState extends State<DraggablePhoto> {
+  late double _localSize;
+
+  @override
+  void initState() {
+    super.initState();
+    _localSize = widget.size;
+  }
+
+  @override
+  void didUpdateWidget(covariant DraggablePhoto oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.size != widget.size) {
+      _localSize = widget.size;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      left: position.dx,
-      top: position.dy,
+      left: widget.position.dx,
+      top: widget.position.dy,
       child: Draggable<String>(
         data: 'photo',
         feedback: Material(
           color: Colors.transparent,
-          child: _buildPhotoWidget(size: size * 1.1),
+          child: _buildPhotoWidget(size: _localSize * 1.1),
         ),
         childWhenDragging: Opacity(
           opacity: 0.3,
-          child: _buildPhotoWidget(size: size),
+          child: _buildPhotoWidget(size: _localSize),
         ),
         onDragEnd: (dragDetails) {
-          final renderBox = canvasKey.currentContext?.findRenderObject() as RenderBox?;
+          final renderBox = widget.canvasKey.currentContext?.findRenderObject() as RenderBox?;
           if (renderBox != null) {
             final Offset localOffset = renderBox.globalToLocal(dragDetails.offset);
-            final double clampedX = localOffset.dx.clamp(0.0, cardWidth - size);
-            final double clampedY = localOffset.dy.clamp(0.0, cardHeight - size);
-            onDragEnd(Offset(clampedX, clampedY));
+            final double clampedX = localOffset.dx.clamp(0.0, widget.cardWidth - _localSize);
+            final double clampedY = localOffset.dy.clamp(0.0, widget.cardHeight - _localSize);
+            widget.onDragEnd(Offset(clampedX, clampedY));
           }
         },
         child: Stack(
           clipBehavior: Clip.none,
           children: [
             GestureDetector(
-              onTap: onTap,
+              onTap: widget.onTap,
               child: Container(
-                decoration: isDesignerMode
+                decoration: widget.isDesignerMode && widget.isSelected
                     ? BoxDecoration(
-                        border: Border.all(color: Colors.grey.withValues(alpha: 0.3), width: 0.5),
+                        border: Border.all(color: const Color(0xFF6A3EEB), width: 1.5),
+                        borderRadius: BorderRadius.circular(8),
                       )
                     : null,
-                child: _buildPhotoWidget(size: size),
+                padding: widget.isDesignerMode && widget.isSelected
+                    ? const EdgeInsets.all(2)
+                    : null,
+                child: _buildPhotoWidget(size: _localSize),
               ),
             ),
-            if (isDesignerMode && onResize != null)
+            if (widget.isDesignerMode && widget.isSelected && widget.onResizeEnd != null)
               Positioned(
                 right: -8,
                 bottom: -8,
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onPanUpdate: (details) {
-                    final newSize = (size + details.delta.dx).clamp(30.0, 150.0);
-                    onResize!(newSize);
+                    setState(() {
+                      _localSize = (_localSize + details.delta.dx).clamp(30.0, 150.0);
+                    });
+                  },
+                  onPanEnd: (_) {
+                    widget.onResizeEnd!(_localSize);
                   },
                   child: Container(
                     padding: const EdgeInsets.all(4),
@@ -111,16 +142,16 @@ class DraggablePhoto extends StatelessWidget {
 
   Widget _buildPhotoWidget({required double size}) {
     Widget imageWidget;
-    if (photo != null) {
+    if (widget.photo != null) {
       imageWidget = Image.file(
-        photo!,
+        widget.photo!,
         width: size,
         height: size,
         fit: BoxFit.cover,
       );
-    } else if (photoUrl != null && photoUrl!.isNotEmpty) {
+    } else if (widget.photoUrl != null && widget.photoUrl!.isNotEmpty) {
       imageWidget = Image.network(
-        photoUrl!,
+        widget.photoUrl!,
         width: size,
         height: size,
         fit: BoxFit.cover,
@@ -144,7 +175,7 @@ class DraggablePhoto extends StatelessWidget {
   }
 
   Widget _applyShape(Widget child, double size) {
-    switch (shape) {
+    switch (widget.shape) {
       case PhotoShape.circle:
         return ClipOval(
           child: SizedBox(width: size, height: size, child: child),
