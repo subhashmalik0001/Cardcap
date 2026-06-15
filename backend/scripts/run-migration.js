@@ -2,6 +2,8 @@ const { Client } = require('pg');
 const fs = require('fs');
 const path = require('path');
 
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 const password = process.argv[2];
 if (!password) {
   console.error("Error: Please provide your Supabase database password.");
@@ -11,7 +13,12 @@ if (!password) {
 
 // Supabase Connection String (Session Pooler on port 6543)
 const connectionString = `postgres://postgres:${encodeURIComponent(password)}@db.zsjinlmpmbxkjghxhoqh.supabase.co:6543/postgres?sslmode=require`;
-const client = new Client({ connectionString });
+const client = new Client({
+  connectionString,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 
 async function run() {
   const migrationPath = path.join(__dirname, '../supabase/migrations/20260616120000_update_scan_storage.sql');
