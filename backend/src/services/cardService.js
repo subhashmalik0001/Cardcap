@@ -45,6 +45,8 @@ const createCard = async (userId, cardData) => {
     linkedin: cardData.linkedin || null,
     twitter: cardData.twitter || null,
     notes: cardData.notes || null,
+    card_image_url: cardData.card_image_url || cardData.cardImageUrl || null,
+    scan_method: cardData.scan_method || cardData.scanMethod || 'auto',
     created_at: cardData.created_at || cardData.createdAt || new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
@@ -72,7 +74,9 @@ const updateCard = async (cardId, userId, updates) => {
     'address',
     'linkedin',
     'twitter',
-    'notes'
+    'notes',
+    'card_image_url',
+    'scan_method'
   ];
 
   const updatePayload = {
@@ -84,6 +88,14 @@ const updateCard = async (cardId, userId, updates) => {
     if (updates[field] !== undefined) {
       updatePayload[field] = updates[field];
     }
+  }
+
+  // Handle camelCase variations if present
+  if (updates.cardImageUrl !== undefined) {
+    updatePayload.card_image_url = updates.cardImageUrl;
+  }
+  if (updates.scanMethod !== undefined) {
+    updatePayload.scan_method = updates.scanMethod;
   }
 
   const { data, error } = await adminClient
