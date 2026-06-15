@@ -27,6 +27,7 @@ class _CardDesignerScreenState extends State<CardDesignerScreen> {
   final GlobalKey _canvasKey = GlobalKey();
   final _picker = ImagePicker();
   bool _isSaving = false;
+  bool _isCapturing = false;
 
   @override
   void initState() {
@@ -344,19 +345,27 @@ class _CardDesignerScreenState extends State<CardDesignerScreen> {
 
   Future<void> _save() async {
     if (_isSaving) return;
-    setState(() => _isSaving = true);
+    setState(() {
+      _isSaving = true;
+      _isCapturing = true;
+    });
     HapticFeedback.mediumImpact();
 
+    // Brief delay to allow handles to hide
+    await Future.delayed(const Duration(milliseconds: 100));
+
     // Show loading indicator dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFF6A3EEB),
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => const Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF6A3EEB),
+          ),
         ),
-      ),
-    );
+      );
+    }
 
     try {
       // 1. Capture the RepaintBoundary as PNG
@@ -396,7 +405,6 @@ class _CardDesignerScreenState extends State<CardDesignerScreen> {
       // Close loading dialog if open
       if (mounted) Navigator.pop(context);
       
-      setState(() => _isSaving = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -404,6 +412,13 @@ class _CardDesignerScreenState extends State<CardDesignerScreen> {
             backgroundColor: AppColors.error,
           ),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+          _isCapturing = false;
+        });
       }
     }
   }
@@ -582,8 +597,7 @@ class _CardDesignerScreenState extends State<CardDesignerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double cardWidth = screenWidth - 32;
+
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0F0F0),
@@ -753,6 +767,12 @@ class _CardDesignerScreenState extends State<CardDesignerScreen> {
                         },
                         onPhotoTap: _showPhotoOptions,
                         canvasKey: _canvasKey,
+                        isDesignerMode: !_isCapturing,
+                        showIcons: provider.showIcons,
+                        photoSize: provider.photoSize,
+                        textSizes: provider.textSizes,
+                        onResizePhoto: (newSize) => provider.setPhotoSize(newSize),
+                        onResizeField: (field, newSize) => provider.updateTextSize(field, newSize),
                       ),
                     ),
                   ),
@@ -778,13 +798,44 @@ class _CardDesignerScreenState extends State<CardDesignerScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Fields on Card',
-                            style: AppTypography.labelSmall.copyWith(
-                              color: AppColors.textSecondary,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.0,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Fields on Card',
+                                style: AppTypography.labelSmall.copyWith(
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  const Text(
+                                    'Icons',
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Transform.scale(
+                                    scale: 0.75,
+                                    child: Switch(
+                                      value: provider.showIcons,
+                                      activeThumbColor: const Color(0xFF6A3EEB),
+                                      activeTrackColor: const Color(0xFFEDE8FC),
+                                      onChanged: (val) {
+                                        HapticFeedback.selectionClick();
+                                        provider.setShowIcons(val);
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 12),
                           Wrap(

@@ -41,6 +41,9 @@ class MyCardProvider extends ChangeNotifier {
   Uint8List? _savedCardImage;
   String? _cardImageUrl;
   String _cardRatio = 'standard'; // 'standard' (1.75:1) or 'square' (1:1)
+  double _photoSize = 56.0;
+  Map<String, double> _textSizes = {};
+  bool _showIcons = true;
 
   bool _isLoading = false;
   String? _error;
@@ -58,6 +61,9 @@ class MyCardProvider extends ChangeNotifier {
   Uint8List? get savedCardImage => _savedCardImage;
   String? get cardImageUrl => _cardImageUrl;
   String get cardRatio => _cardRatio;
+  double get photoSize => _photoSize;
+  Map<String, double> get textSizes => _textSizes;
+  bool get showIcons => _showIcons;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
@@ -124,6 +130,21 @@ class MyCardProvider extends ChangeNotifier {
     }
   }
 
+  void setPhotoSize(double size) {
+    _photoSize = size;
+    notifyListeners();
+  }
+
+  void updateTextSize(String field, double size) {
+    _textSizes[field] = size;
+    notifyListeners();
+  }
+
+  void setShowIcons(bool show) {
+    _showIcons = show;
+    notifyListeners();
+  }
+
   // ── Storage Operations ──
 
   /// Persist the design locally to SharedPreferences
@@ -149,6 +170,9 @@ class MyCardProvider extends ChangeNotifier {
         visibleFields: _visibleFields,
         cardImageUrl: _cardImageUrl,
         cardRatio: _cardRatio,
+        photoSize: _photoSize,
+        textSizes: _textSizes,
+        showIcons: _showIcons,
       );
 
       await prefs.setString(_storageKey, jsonEncode(design.toJson()));
@@ -203,6 +227,9 @@ class MyCardProvider extends ChangeNotifier {
         _visibleFields = Map<String, bool>.from(design.visibleFields);
         _cardImageUrl = design.cardImageUrl;
         _cardRatio = design.cardRatio;
+        _photoSize = design.photoSize;
+        _textSizes = Map<String, double>.from(design.textSizes);
+        _showIcons = design.showIcons;
 
         final imageString = prefs.getString('${_storageKey}_image');
         if (imageString != null && imageString.isNotEmpty) {
@@ -282,6 +309,13 @@ class MyCardProvider extends ChangeNotifier {
         // Snapshots
         _cardImageUrl = cardData['card_image_url'] as String?;
         _cardRatio = cardData['card_ratio'] as String? ?? 'standard';
+        _photoSize = (cardData['photo_size'] as num?)?.toDouble() ?? 56.0;
+        _showIcons = cardData['show_icons'] as bool? ?? true;
+        _textSizes = {};
+        final rawTextSizes = cardData['text_sizes'] as Map<String, dynamic>? ?? {};
+        rawTextSizes.forEach((key, val) {
+          _textSizes[key] = (val as num).toDouble();
+        });
 
         // Update local SharedPreferences Cache
         await _persistToStorage();
@@ -336,6 +370,9 @@ class MyCardProvider extends ChangeNotifier {
           'textColor': '0x${_textColor.value.toRadixString(16).toUpperCase()}',
           'visibleFields': _visibleFields,
           'cardRatio': _cardRatio,
+          'photoSize': _photoSize,
+          'textSizes': _textSizes,
+          'showIcons': _showIcons,
           if (photoBase64 != null) 'photoBase64': photoBase64,
           if (_photoUrl != null) 'photoUrl': _photoUrl,
           'cardImageBase64': cardImageBase64,
@@ -384,6 +421,9 @@ class MyCardProvider extends ChangeNotifier {
       _textColor = const Color(0xFF1D1D1D);
       _fieldPositions = {};
       _photoShape = PhotoShape.circle;
+      _photoSize = 56.0;
+      _textSizes = {};
+      _showIcons = true;
       _visibleFields = {
         'name': true,
         'title': true,

@@ -25,6 +25,12 @@ class CardCanvas extends StatelessWidget {
   final Function(String, Offset) onUpdatePosition;
   final VoidCallback onPhotoTap;
   final GlobalKey canvasKey;
+  final bool isDesignerMode;
+  final bool showIcons;
+  final double photoSize;
+  final Map<String, double> textSizes;
+  final Function(double)? onResizePhoto;
+  final Function(String, double)? onResizeField;
 
   const CardCanvas({
     super.key,
@@ -40,6 +46,12 @@ class CardCanvas extends StatelessWidget {
     required this.onUpdatePosition,
     required this.onPhotoTap,
     required this.canvasKey,
+    this.isDesignerMode = false,
+    this.showIcons = true,
+    this.photoSize = 56.0,
+    this.textSizes = const {},
+    this.onResizePhoto,
+    this.onResizeField,
   });
 
   Offset _getFieldPosition(String key, double cardWidth, double cardHeight) {
@@ -151,13 +163,15 @@ class CardCanvas extends StatelessWidget {
                     photo: userPhoto,
                     photoUrl: photoUrl,
                     shape: photoShape,
-                    size: cardRatio == 'square' ? 76.0 : 56.0,
+                    size: photoSize,
                     position: _getFieldPosition('photo', cardWidth, cardHeight),
                     onDragEnd: (offset) => onUpdatePosition('photo', offset),
                     onTap: onPhotoTap,
                     canvasKey: canvasKey,
                     cardWidth: cardWidth,
                     cardHeight: cardHeight,
+                    isDesignerMode: isDesignerMode,
+                    onResize: onResizePhoto,
                   ),
 
                 // 3. Text Fields Layers
@@ -178,16 +192,21 @@ class CardCanvas extends StatelessWidget {
                       }
                     }
 
+                    final double fieldFontSize = textSizes[key] ?? (key == 'name' ? 14.0 : 11.0);
+
                     return DraggableField(
                       fieldKey: key,
                       value: val,
                       position: _getFieldPosition(key, cardWidth, cardHeight),
                       onDragEnd: (offset) => onUpdatePosition(key, offset),
                       textColor: displayColor,
-                      showIcon: key != 'name', // No icon for the person's name
+                      showIcon: showIcons && key != 'name', // No icon for the person's name
                       canvasKey: canvasKey,
                       cardWidth: cardWidth,
                       cardHeight: cardHeight,
+                      isDesignerMode: isDesignerMode,
+                      fontSize: fieldFontSize,
+                      onResize: onResizeField != null ? (newSize) => onResizeField!(key, newSize) : null,
                     );
                   }
                   return const SizedBox.shrink();

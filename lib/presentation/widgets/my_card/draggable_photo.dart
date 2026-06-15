@@ -15,6 +15,8 @@ class DraggablePhoto extends StatelessWidget {
   final GlobalKey canvasKey;
   final double cardWidth;
   final double cardHeight;
+  final bool isDesignerMode;
+  final Function(double)? onResize;
 
   const DraggablePhoto({
     super.key,
@@ -28,6 +30,8 @@ class DraggablePhoto extends StatelessWidget {
     required this.canvasKey,
     required this.cardWidth,
     required this.cardHeight,
+    this.isDesignerMode = false,
+    this.onResize,
   });
 
   @override
@@ -54,9 +58,52 @@ class DraggablePhoto extends StatelessWidget {
             onDragEnd(Offset(clampedX, clampedY));
           }
         },
-        child: GestureDetector(
-          onTap: onTap,
-          child: _buildPhotoWidget(size: size),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            GestureDetector(
+              onTap: onTap,
+              child: Container(
+                decoration: isDesignerMode
+                    ? BoxDecoration(
+                        border: Border.all(color: Colors.grey.withValues(alpha: 0.3), width: 0.5),
+                      )
+                    : null,
+                child: _buildPhotoWidget(size: size),
+              ),
+            ),
+            if (isDesignerMode && onResize != null)
+              Positioned(
+                right: -8,
+                bottom: -8,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onPanUpdate: (details) {
+                    final newSize = (size + details.delta.dx).clamp(30.0, 150.0);
+                    onResize!(newSize);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF6A3EEB),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 3,
+                          offset: Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.open_in_full,
+                      size: 10,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

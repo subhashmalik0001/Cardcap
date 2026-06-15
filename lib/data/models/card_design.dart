@@ -10,6 +10,9 @@ class CardDesign {
   final Map<String, bool> visibleFields;
   final String? cardImageUrl;
   final String cardRatio; // 'standard' (1.75:1) or 'square' (1:1)
+  final double photoSize;
+  final Map<String, double> textSizes;
+  final bool showIcons;
 
   const CardDesign({
     required this.details,
@@ -21,6 +24,9 @@ class CardDesign {
     required this.visibleFields,
     this.cardImageUrl,
     this.cardRatio = 'standard',
+    this.photoSize = 56.0,
+    this.textSizes = const {},
+    this.showIcons = true,
   });
 
   CardDesign copyWith({
@@ -33,6 +39,9 @@ class CardDesign {
     Map<String, bool>? visibleFields,
     String? cardImageUrl,
     String? cardRatio,
+    double? photoSize,
+    Map<String, double>? textSizes,
+    bool? showIcons,
   }) {
     return CardDesign(
       details: details ?? this.details,
@@ -44,6 +53,9 @@ class CardDesign {
       visibleFields: visibleFields ?? this.visibleFields,
       cardImageUrl: cardImageUrl ?? this.cardImageUrl,
       cardRatio: cardRatio ?? this.cardRatio,
+      photoSize: photoSize ?? this.photoSize,
+      textSizes: textSizes ?? this.textSizes,
+      showIcons: showIcons ?? this.showIcons,
     );
   }
 
@@ -58,6 +70,9 @@ class CardDesign {
       'visibleFields': visibleFields,
       'cardImageUrl': cardImageUrl,
       'cardRatio': cardRatio,
+      'photoSize': photoSize,
+      'textSizes': textSizes,
+      'showIcons': showIcons,
     };
   }
 
@@ -81,6 +96,13 @@ class CardDesign {
       parsedVisible[key.toString()] = val as bool? ?? false;
     });
 
+    // Parse textSizes map safely
+    final rawTextSizes = json['textSizes'] as Map<dynamic, dynamic>? ?? {};
+    final Map<String, double> parsedTextSizes = {};
+    rawTextSizes.forEach((key, val) {
+      parsedTextSizes[key.toString()] = (val as num?)?.toDouble() ?? 11.0;
+    });
+
     return CardDesign(
       details: MyCardDetails.fromJson(json['details'] as Map<String, dynamic>? ?? {}),
       templateId: json['templateId'] as String? ?? 'classic',
@@ -91,6 +113,9 @@ class CardDesign {
       visibleFields: parsedVisible,
       cardImageUrl: json['cardImageUrl'] as String?,
       cardRatio: json['cardRatio'] as String? ?? 'standard',
+      photoSize: (json['photoSize'] as num?)?.toDouble() ?? 56.0,
+      textSizes: parsedTextSizes,
+      showIcons: json['showIcons'] as bool? ?? true,
     );
   }
 }
