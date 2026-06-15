@@ -7,7 +7,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../data/services/card_cropper_service.dart';
 import '../../../data/services/card_detector_service.dart';
 import 'scan_result_screen.dart';
 import 'widgets/camera_preview_layer.dart';
@@ -34,7 +33,6 @@ class _SmartScanScreenState extends State<SmartScanScreen> {
 
   // Services
   final CardDetectorService _detectorService = CardDetectorService();
-  final CardCropperService _cropperService = CardCropperService();
   final ImagePicker _imagePicker = ImagePicker();
 
   // Detection and Stability State
@@ -158,22 +156,12 @@ class _SmartScanScreenState extends State<SmartScanScreen> {
       await _controller?.stopImageStream();
       final XFile rawImage = await _controller!.takePicture();
 
-      // For manual capture, check if we currently have a detected rect
-      if (_detectedNormalizedRect != null) {
-        // Auto-crop detected area
-        final File croppedFile = await _cropperService.cropCard(
-          imagePath: rawImage.path,
-          normalizedRect: _detectedNormalizedRect!,
-        );
-        _navigateToResultScreen(croppedFile, 'auto');
+      // Always open manual cropper UI to let user adjust bounds and verify card before OCR
+      final croppedFile = await _showManualCropper(rawImage.path);
+      if (croppedFile != null) {
+        _navigateToResultScreen(croppedFile, 'manual');
       } else {
-        // Fallback to manual cropper UI
-        final croppedFile = await _showManualCropper(rawImage.path);
-        if (croppedFile != null) {
-          _navigateToResultScreen(croppedFile, 'manual');
-        } else {
-          _resumeScanning();
-        }
+        _resumeScanning();
       }
     } catch (e) {
       print('Manual capture failed: $e');
