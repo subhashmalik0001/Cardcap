@@ -11,6 +11,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/permission_utils.dart';
 import '../../../data/models/business_card.dart';
 import '../../providers/cards_provider.dart';
+import '../../providers/my_card_provider.dart';
 import '../../widgets/common/avatar_initials.dart';
 import '../../widgets/contacts/search_bar.dart';
 
@@ -39,6 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CardsProvider>().loadCards();
       context.read<CardsProvider>().loadMyCard();
+      context.read<MyCardProvider>().init();
     });
   }
 
@@ -269,76 +271,312 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCardStack(CardsProvider provider) {
-    const double cardHeight = 220.0;
+  int _currentIndex = 0;
+
+  Widget _buildCardStack(CardsProvider cardsProvider) {
+    final userProvider = Provider.of<MyCardProvider>(context);
+    final double cardWidth = MediaQuery.of(context).size.width - 32;
+    final double cardHeight = userProvider.cardRatio == 'square' ? cardWidth : cardWidth / 1.75;
+    
+    // Create card widgets list
+    final List<Widget> cardWidgets = [];
+
+    // 1. User Card
+    Widget userCardWidget;
+    if (userProvider.savedCardImage != null) {
+      userCardWidget = ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: Image.memory(
+          userProvider.savedCardImage!,
+          height: cardHeight,
+          width: double.infinity,
+          fit: BoxFit.fill,
+        ),
+      );
+    } else if (userProvider.cardImageUrl != null && userProvider.cardImageUrl!.isNotEmpty) {
+      userCardWidget = ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: Image.network(
+          userProvider.cardImageUrl!,
+          height: cardHeight,
+          width: double.infinity,
+          fit: BoxFit.fill,
+          errorBuilder: (context, error, stackTrace) => _buildDefaultUserCard(userProvider, cardHeight),
+        ),
+      );
+    } else {
+      userCardWidget = _buildDefaultUserCard(userProvider, cardHeight);
+    }
+
+    final userCardContainer = Container(
+      width: double.infinity,
+      height: cardHeight,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x30000000),
+            blurRadius: 20,
+            offset: Offset(0, 10),
+          ),
+        ],
+      ),
+      child: userCardWidget,
+    );
+
+    cardWidgets.add(userCardContainer);
+
+    // 2. Scanned Cards
+    for (final card in cardsProvider.cards) {
+      cardWidgets.add(
+        _buildScannedCardInStack(card, cardHeight),
+      );
+    }
+
+    final int total = cardWidgets.length;
+    if (total == 0) return const SizedBox.shrink();
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 20, 16, 16),
       height: cardHeight + 24,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Card 3 (backmost)
-          Positioned(
-            left: 0,
-            right: 0,
-            top: 4,
-            child: Opacity(
-              opacity: 0.5,
-              child: Transform.rotate(
-                angle: -6 * 3.141592653589793 / 180,
-                child: Transform.scale(
-                  scale: 0.88,
-                  child: _buildCardBase(cardHeight),
+          // 3D Card 3 (backmost) - only if total >= 3
+          if (total >= 3)
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 4,
+              child: Opacity(
+                opacity: 0.4,
+                child: Transform.rotate(
+                  angle: -6 * 3.141592653589793 / 180,
+                  child: Transform.scale(
+                    scale: 0.88,
+                    child: cardWidgets[(_currentIndex + 2) % total],
+                  ),
                 ),
               ),
             ),
-          ),
-          // Card 2 (middle)
-          Positioned(
-            left: 0,
-            right: 0,
-            top: 12,
-            child: Opacity(
-              opacity: 0.75,
-              child: Transform.rotate(
-                angle: -3 * 3.141592653589793 / 180,
-                child: Transform.scale(
-                  scale: 0.94,
-                  child: _buildCardBase(cardHeight),
+          
+          // 3D Card 2 (middle) - only if total >= 2
+          if (total >= 2)
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 12,
+              child: Opacity(
+                opacity: 0.7,
+                child: Transform.rotate(
+                  angle: -3 * 3.141592653589793 / 180,
+                  child: Transform.scale(
+                    scale: 0.94,
+                    child: cardWidgets[(_currentIndex + 1) % total],
+                  ),
                 ),
               ),
             ),
-          ),
-          // Card 1 (frontmost)
+
+          // 3D Card 1 (frontmost)
           Positioned(
             left: 0,
             right: 0,
             top: 20,
-            child: _buildFrontCard(provider, cardHeight),
+            child: Dismissible(
+              key: ValueKey('swipeable_card_$_currentIndex'),
+              direction: total > 1 ? DismissDirection.horizontal : DismissDirection.none,
+              onDismissed: (direction) {
+                HapticFeedback.lightImpact();
+                setState(() {
+                  _currentIndex = (_currentIndex + 1) % total;
+                });
+              },
+              child: cardWidgets[_currentIndex % total],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCardBase(double height) {
+  Widget _buildScannedCardInStack(BusinessCard card, double height) {
+    if (card.cardImageUrl != null && card.cardImageUrl!.isNotEmpty) {
+      return Container(
+        height: height,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x30000000),
+              blurRadius: 20,
+              offset: Offset(0, 10),
+            )
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: Image.network(
+            card.cardImageUrl!,
+            height: height,
+            width: double.infinity,
+            fit: BoxFit.fill,
+            errorBuilder: (context, error, stackTrace) =>
+                _buildScannedCardPlaceholder(card, height),
+          ),
+        ),
+      );
+    }
+    return _buildScannedCardPlaceholder(card, height);
+  }
+
+  Widget _buildScannedCardPlaceholder(BusinessCard card, double height) {
+    // Generate a beautiful consistent gradient based on the card id hash
+    final gradients = [
+      const [Color(0xFF2C3E50), Color(0xFF3498DB)], // Dark Blue
+      const [Color(0xFF13A664), Color(0xFF118C55)], // Green Teal
+      const [Color(0xFF8E44AD), Color(0xFF9B59B6)], // Purple
+      const [Color(0xFFD35400), Color(0xFFE67E22)], // Orange/Rust
+      const [Color(0xFF1D1D1D), Color(0xFF4A4A4A)], // Dark Charcoal
+      const [Color(0xFF1E3C72), Color(0xFF2A5298)], // Royal Navy
+    ];
+    final gradientIndex = card.id.hashCode.abs() % gradients.length;
+    final colors = gradients[gradientIndex];
+
     return Container(
       height: height,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF8B68F0), Color(0xFF4A25C9)],
+          colors: colors,
         ),
         borderRadius: BorderRadius.circular(28),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x30000000),
+            blurRadius: 20,
+            offset: Offset(0, 10),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  card.company ?? 'Business Contact',
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(LucideIcons.scan, size: 12, color: Colors.white70),
+                  SizedBox(width: 4),
+                  Text(
+                    'Scanned',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 11,
+                      color: Colors.white70,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            card.displayName,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          if (card.designation != null && card.designation!.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              card.designation!,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                color: Colors.white.withValues(alpha: 0.8),
+              ),
+            ),
+          ],
+          const Spacer(),
+          if (card.phones.isNotEmpty) ...[
+            Row(
+              children: [
+                const Icon(LucideIcons.phone, size: 12, color: Colors.white70),
+                const SizedBox(width: 8),
+                Text(
+                  card.phones.first,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 11,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+          ],
+          if (card.email != null && card.email!.isNotEmpty) ...[
+            Row(
+              children: [
+                const Icon(LucideIcons.mail, size: 12, color: Colors.white70),
+                const SizedBox(width: 8),
+                Text(
+                  card.email!,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 11,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+          ],
+          if (card.website != null && card.website!.isNotEmpty) ...[
+            Row(
+              children: [
+                const Icon(LucideIcons.globe, size: 12, color: Colors.white70),
+                const SizedBox(width: 8),
+                Text(
+                  card.website!,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 11,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }
 
-  Widget _buildFrontCard(CardsProvider provider, double height) {
-    final totalCardsCount = provider.cardCount;
-    final myCardName = provider.myCard?.name ?? 'Your Name';
-
+  Widget _buildDefaultUserCard(MyCardProvider provider, double height) {
     return Container(
       height: height,
       padding: const EdgeInsets.all(20),
@@ -349,13 +587,6 @@ class _HomeScreenState extends State<HomeScreen> {
           colors: [Color(0xFF8B68F0), Color(0xFF4A25C9)],
         ),
         borderRadius: BorderRadius.circular(28),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x406A3EEB),
-            blurRadius: 32,
-            offset: Offset(0, 12),
-          )
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -363,138 +594,52 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    myCardName,
-                    style: AppTypography.titleLarge.copyWith(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '•••• •••• •••• 5678',
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
+              Text(
+                'Personal Card',
+                style: AppTypography.titleLarge.copyWith(
+                  color: Colors.white70,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(LucideIcons.scan, size: 14, color: Colors.white),
-                  const SizedBox(width: 4),
-                  Text(
-                    'CardCapture',
-                    style: AppTypography.bodyLarge.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 15,
-                    ),
-                  ),
-                ],
-              ),
+              const Icon(LucideIcons.wallet, color: Colors.white70, size: 18),
             ],
           ),
           const Spacer(),
           Text(
-            'Total Cards Scanned',
-            style: AppTypography.bodyMedium.copyWith(
-              color: Colors.white.withValues(alpha: 0.65),
-              fontSize: 12,
+            provider.details?.name.isNotEmpty == true ? provider.details!.name : 'Your Name',
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
           ),
-          const SizedBox(height: 2),
           Text(
-            '$totalCardsCount Business Cards',
-            style: AppTypography.displayMedium.copyWith(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
+            provider.details?.title?.isNotEmpty == true ? provider.details!.title! : 'Tap Redesign below to customize',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              color: Colors.white.withValues(alpha: 0.8),
             ),
           ),
           const Spacer(),
           Row(
             children: [
-              // Scan button
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  if (widget.onNavigateToScan != null) {
-                    widget.onNavigateToScan!();
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(LucideIcons.scanLine, color: Colors.white, size: 16),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Scan Card',
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const Spacer(),
-              // Transfer icon
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  if (widget.onNavigateToContacts != null) {
-                    widget.onNavigateToContacts!();
-                  }
-                },
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.25),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    LucideIcons.arrowLeftRight,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Eye icon
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
+              ElevatedButton.icon(
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
                   if (widget.onNavigateToMyCard != null) {
                     widget.onNavigateToMyCard!();
                   }
                 },
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.25),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    LucideIcons.eye,
-                    color: Colors.white,
-                    size: 18,
+                icon: const Icon(LucideIcons.palette, size: 14),
+                label: const Text('Redesign', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF6A3EEB),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
               ),
