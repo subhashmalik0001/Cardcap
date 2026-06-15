@@ -270,7 +270,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCardStack(CardsProvider provider) {
-    const double cardHeight = 200.0;
+    const double cardHeight = 220.0;
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 20, 16, 16),
       height: cardHeight + 24,
@@ -288,7 +288,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 angle: -6 * 3.141592653589793 / 180,
                 child: Transform.scale(
                   scale: 0.88,
-                  child: _buildCardBase(),
+                  child: _buildCardBase(cardHeight),
                 ),
               ),
             ),
@@ -304,7 +304,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 angle: -3 * 3.141592653589793 / 180,
                 child: Transform.scale(
                   scale: 0.94,
-                  child: _buildCardBase(),
+                  child: _buildCardBase(cardHeight),
                 ),
               ),
             ),
@@ -314,16 +314,16 @@ class _HomeScreenState extends State<HomeScreen> {
             left: 0,
             right: 0,
             top: 20,
-            child: _buildFrontCard(provider),
+            child: _buildFrontCard(provider, cardHeight),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCardBase() {
+  Widget _buildCardBase(double height) {
     return Container(
-      height: 200,
+      height: height,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -335,12 +335,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildFrontCard(CardsProvider provider) {
+  Widget _buildFrontCard(CardsProvider provider, double height) {
     final totalCardsCount = provider.cardCount;
     final myCardName = provider.myCard?.name ?? 'Your Name';
 
     return Container(
-      height: 200,
+      height: height,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
