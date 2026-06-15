@@ -7,9 +7,8 @@ class ApiService {
   factory ApiService() => _instance;
   ApiService._internal();
 
-  // On macOS Simulator/Emulator, localhost points to the host machine
-  // Android emulator requires 10.0.2.2.
-  static const String _baseUrl = 'http://localhost:5001/api';
+  // Production URL hosted on Render
+  static const String _baseUrl = 'https://cardcap.onrender.com/api';
   
   String? _token;
 
