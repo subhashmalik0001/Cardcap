@@ -88,6 +88,10 @@ const saveMyCard = async (userId, payload) => {
     text_color: payload.textColor,
     visible_fields: payload.visibleFields,
     card_image_url: cardImageUrl,
+    card_ratio: payload.cardRatio || 'standard',
+    show_icons: payload.showIcons !== undefined ? payload.showIcons : true,
+    photo_size: payload.photoSize || 56.0,
+    text_sizes: payload.textSizes || {},
     updated_at: new Date().toISOString()
   };
 
