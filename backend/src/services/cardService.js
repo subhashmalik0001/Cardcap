@@ -45,7 +45,7 @@ const createCard = async (userId, cardData) => {
     linkedin: cardData.linkedin || null,
     twitter: cardData.twitter || null,
     notes: cardData.notes || null,
-    created_at: new Date().toISOString(),
+    created_at: cardData.created_at || cardData.createdAt || new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
 
