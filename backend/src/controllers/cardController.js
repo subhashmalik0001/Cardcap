@@ -2,6 +2,7 @@ const Joi = require('joi');
 const cardService = require('../services/cardService');
 
 const cardCreateSchema = Joi.object({
+  id: Joi.string().guid({ version: ['uuidv4'] }).optional(),
   name: Joi.string().allow(null, ''),
   designation: Joi.string().allow(null, ''),
   company: Joi.string().allow(null, ''),
@@ -12,11 +13,12 @@ const cardCreateSchema = Joi.object({
   linkedin: Joi.string().allow(null, ''),
   twitter: Joi.string().allow(null, ''),
   notes: Joi.string().allow(null, '')
-}).min(1).messages({
+}).min(1).unknown(true).messages({
   'object.min': 'At least one field must be populated to save a card'
 });
 
 const cardUpdateSchema = Joi.object({
+  id: Joi.string().guid({ version: ['uuidv4'] }).optional(),
   name: Joi.string().allow(null, ''),
   designation: Joi.string().allow(null, ''),
   company: Joi.string().allow(null, ''),
@@ -27,7 +29,7 @@ const cardUpdateSchema = Joi.object({
   linkedin: Joi.string().allow(null, ''),
   twitter: Joi.string().allow(null, ''),
   notes: Joi.string().allow(null, '')
-}).min(1).messages({
+}).min(1).unknown(true).messages({
   'object.min': 'At least one field must be populated to update a card'
 });
 

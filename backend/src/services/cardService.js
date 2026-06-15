@@ -33,7 +33,7 @@ const getCardById = async (cardId, userId) => {
 
 const createCard = async (userId, cardData) => {
   const card = {
-    id: uuidv4(),
+    id: cardData.id || uuidv4(),
     user_id: userId,
     name: cardData.name || null,
     designation: cardData.designation || null,
