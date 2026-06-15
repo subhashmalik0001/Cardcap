@@ -152,6 +152,33 @@ class ApiService {
     _handleResponse(response);
   }
 
+  // ── Personal Card (My Card) Endpoints ──
+
+  Future<Map<String, dynamic>> getMyCard() async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/my-card'),
+      headers: _getHeaders(),
+    );
+    return _handleResponse(response);
+  }
+
+  Future<Map<String, dynamic>> saveMyCard(Map<String, dynamic> cardData) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/my-card'),
+      headers: _getHeaders(),
+      body: jsonEncode(cardData),
+    );
+    return _handleResponse(response);
+  }
+
+  Future<void> deleteMyCard() async {
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/my-card'),
+      headers: _getHeaders(),
+    );
+    _handleResponse(response);
+  }
+
   // Helper response validation
   Map<String, dynamic> _handleResponse(http.Response response) {
     final String body = response.body;

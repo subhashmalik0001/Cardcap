@@ -5,6 +5,7 @@ import 'data/repositories/card_repository.dart';
 import 'presentation/providers/cards_provider.dart';
 import 'presentation/providers/scan_provider.dart';
 import 'presentation/providers/auth_provider.dart';
+import 'presentation/providers/my_card_provider.dart';
 import 'presentation/screens/splash/splash_screen.dart';
 import 'presentation/screens/shell/shell_screen.dart';
 import 'presentation/screens/review/review_screen.dart';
@@ -27,6 +28,9 @@ void main() {
         ),
         ChangeNotifierProvider(
           create: (_) => ScanProvider(repository: cardRepository),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => MyCardProvider()..init(),
         ),
       ],
       child: const CardCaptureApp(),
