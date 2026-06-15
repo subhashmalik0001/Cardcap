@@ -8,6 +8,7 @@ const errorHandler = require('./middleware/errorHandler');
 
 const authRoutes = require('./routes/auth');
 const cardRoutes = require('./routes/cards');
+const myCardRoutes = require('./routes/myCard');
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use('/api', rateLimiter);
 // 3. Mount Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/cards', cardRoutes);
+app.use('/api/my-card', myCardRoutes);
 
 // Health Check Endpoint
 app.get('/health', (req, res) => {
