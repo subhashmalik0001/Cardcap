@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../../data/models/my_card_details.dart';
@@ -51,7 +51,7 @@ class MyCardQrSection extends StatelessWidget {
           dataModuleShape: QrDataModuleShape.circle, color: Color(0xFF0A0A0A)),
       ).toImageData(800);
       
-      final result = await ImageGallerySaver.saveImage(
+      final result = await ImageGallerySaverPlus.saveImage(
         qrImage!.buffer.asUint8List(),
         name: 'nebula_qr_${DateTime.now().millisecondsSinceEpoch}',
       );
