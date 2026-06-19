@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL,
   full_name TEXT,
+  qr_generated_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -21,6 +22,7 @@ CREATE TABLE IF NOT EXISTS public.business_cards (
   linkedin TEXT,
   twitter TEXT,
   notes TEXT,
+  source TEXT DEFAULT 'scan',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

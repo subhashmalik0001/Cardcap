@@ -115,21 +115,23 @@ class WalletCardPreview extends StatelessWidget {
 
           const SizedBox(height: AppSpacing.xs),
 
-          // OCR badge
+          // Source badge (OCR / QR)
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Container(
                 width: 5,
                 height: 5,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFFB300),
+                decoration: BoxDecoration(
+                  color: card.source == 'qr' ? const Color(0xFF12A664) : const Color(0xFFFFB300),
                   shape: BoxShape.circle,
                 ),
               ),
               const SizedBox(width: 4),
               Text(
-                'OCR extracted · verify before saving',
+                card.source == 'qr'
+                    ? 'QR verified contact details'
+                    : 'OCR extracted · verify before saving',
                 style: AppTypography.labelSmall.copyWith(
                   color: AppColors.textOnPrimary.withValues(alpha: 0.7),
                   fontSize: 9,

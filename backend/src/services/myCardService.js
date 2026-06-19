@@ -104,6 +104,17 @@ const saveMyCard = async (userId, payload) => {
   if (error) {
     throw error;
   }
+
+  // Update profiles.qr_generated_at to track that the user generated their card QR
+  try {
+    await adminClient
+      .from('profiles')
+      .update({ qr_generated_at: new Date().toISOString() })
+      .eq('id', userId);
+  } catch (err) {
+    console.error('Failed to update profiles.qr_generated_at:', err);
+  }
+
   return data;
 };
 

@@ -47,6 +47,7 @@ const createCard = async (userId, cardData) => {
     notes: cardData.notes || null,
     card_image_url: cardData.card_image_url || cardData.cardImageUrl || null,
     scan_method: cardData.scan_method || cardData.scanMethod || 'auto',
+    source: cardData.source || 'scan',
     created_at: cardData.created_at || cardData.createdAt || new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
@@ -76,7 +77,8 @@ const updateCard = async (cardId, userId, updates) => {
     'twitter',
     'notes',
     'card_image_url',
-    'scan_method'
+    'scan_method',
+    'source'
   ];
 
   const updatePayload = {

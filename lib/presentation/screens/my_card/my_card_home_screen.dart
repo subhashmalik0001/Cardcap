@@ -13,6 +13,7 @@ import '../../providers/my_card_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/common/app_header.dart';
 import '../../widgets/common/modern_button.dart';
+import '../../widgets/my_card/my_card_qr_section.dart';
 
 class MyCardHomeScreen extends StatefulWidget {
   const MyCardHomeScreen({super.key});
@@ -468,6 +469,9 @@ class _MyCardHomeScreenState extends State<MyCardHomeScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          if (provider.details != null)
+            MyCardQrSection(details: provider.details!),
           const SizedBox(height: 120),
         ],
       ),

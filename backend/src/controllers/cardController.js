@@ -16,7 +16,8 @@ const cardCreateSchema = Joi.object({
   cardImageUrl: Joi.string().allow(null, ''),
   card_image_url: Joi.string().allow(null, ''),
   scanMethod: Joi.string().allow(null, ''),
-  scan_method: Joi.string().allow(null, '')
+  scan_method: Joi.string().allow(null, ''),
+  source: Joi.string().valid('scan', 'qr', 'manual').default('scan')
 }).min(1).unknown(true).messages({
   'object.min': 'At least one field must be populated to save a card'
 });
@@ -36,7 +37,8 @@ const cardUpdateSchema = Joi.object({
   cardImageUrl: Joi.string().allow(null, ''),
   card_image_url: Joi.string().allow(null, ''),
   scanMethod: Joi.string().allow(null, ''),
-  scan_method: Joi.string().allow(null, '')
+  scan_method: Joi.string().allow(null, ''),
+  source: Joi.string().valid('scan', 'qr', 'manual')
 }).min(1).unknown(true).messages({
   'object.min': 'At least one field must be populated to update a card'
 });

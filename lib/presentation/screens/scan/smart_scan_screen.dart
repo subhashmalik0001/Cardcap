@@ -7,13 +7,18 @@ import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../data/models/qr_card_payload.dart';
 import '../../../data/services/card_detector_service.dart';
+import '../../../data/services/qr_detector_service.dart';
+import '../../widgets/scan/qr_detected_overlay.dart';
+import 'qr_scan_result_screen.dart';
 import 'scan_result_screen.dart';
 import 'widgets/camera_preview_layer.dart';
 import 'widgets/capture_animation.dart';
 import 'widgets/detection_frame_overlay.dart';
 import 'widgets/scan_guide_overlay.dart';
 import 'widgets/scan_status_bar.dart';
+import 'package:vibration/vibration.dart';
 
 class SmartScanScreen extends StatefulWidget {
   const SmartScanScreen({super.key});
@@ -33,12 +38,18 @@ class _SmartScanScreenState extends State<SmartScanScreen> {
 
   // Services
   final CardDetectorService _detectorService = CardDetectorService();
+  final QrDetectorService _qrDetectorService = QrDetectorService();
   final ImagePicker _imagePicker = ImagePicker();
 
   // Detection and Stability State
   Rect? _detectedNormalizedRect;
   double _stabilityProgress = 0.0;
   String _statusText = 'Align card inside the frame';
+
+  // QR state
+  bool _qrProcessed = false;
+  bool _qrCardDetected = false;
+  QrCardPayload? _detectedQrPayload;
 
   @override
   void initState() {
@@ -87,13 +98,45 @@ class _SmartScanScreenState extends State<SmartScanScreen> {
     if (_controller == null || !_controller!.value.isInitialized) return;
 
     _controller!.startImageStream((CameraImage image) async {
-      if (_isProcessingFrame || _isCapturing || !mounted) return;
+      if (_isProcessingFrame || _isCapturing || _qrProcessed || !mounted) return;
       _isProcessingFrame = true;
 
       try {
+        // 1. Scan for QR code first
+        final qrPayload = await _qrDetectorService.detectQr(image, camera);
+        if (qrPayload != null && mounted && !_qrProcessed) {
+          _qrProcessed = true;
+          _isProcessingFrame = false;
+
+          final hasVibrator = await Vibration.hasVibrator();
+          if (hasVibrator == true) {
+            Vibration.vibrate(duration: 100);
+          }
+
+          setState(() {
+            _qrCardDetected = true;
+            _detectedQrPayload = qrPayload;
+            _statusText = 'QR code found';
+          });
+
+          await _controller?.stopImageStream();
+          
+          await Future.delayed(const Duration(milliseconds: 600));
+
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => QrScanResultScreen(payload: qrPayload),
+              ),
+            );
+          }
+          return;
+        }
+
+        // 2. Fall back to business card text/bounds detection
         final result = await _detectorService.detectCard(image, camera);
 
-        if (!mounted || _isCapturing) return;
+        if (!mounted || _isCapturing || _qrProcessed) return;
 
         if (result != null) {
           // Calculate rotated image dimensions for normalization
@@ -246,6 +289,9 @@ class _SmartScanScreenState extends State<SmartScanScreen> {
       _detectedNormalizedRect = null;
       _stabilityProgress = 0.0;
       _statusText = 'Align card inside the frame';
+      _qrProcessed = false;
+      _qrCardDetected = false;
+      _detectedQrPayload = null;
     });
 
     if (_controller != null && _isCameraInitialized) {
@@ -267,6 +313,7 @@ class _SmartScanScreenState extends State<SmartScanScreen> {
   void dispose() {
     _controller?.dispose();
     _detectorService.dispose();
+    _qrDetectorService.dispose();
     super.dispose();
   }
 
@@ -286,14 +333,21 @@ class _SmartScanScreenState extends State<SmartScanScreen> {
                 CameraPreviewLayer(controller: _controller!),
 
                 // Dark overlay cutout guide
-                if (_detectedNormalizedRect == null)
-                  const ScanGuideOverlay(),
+                if (_detectedNormalizedRect == null && !_qrCardDetected)
+                  const ScanGuideOverlay(
+                    tipText: 'Align card or scan Nebula QR code',
+                  ),
 
                 // Active green detection frame with sweeps and stability progress
-                DetectionFrameOverlay(
-                  normalizedRect: _detectedNormalizedRect,
-                  stabilityProgress: _stabilityProgress,
-                ),
+                if (!_qrCardDetected)
+                  DetectionFrameOverlay(
+                    normalizedRect: _detectedNormalizedRect,
+                    stabilityProgress: _stabilityProgress,
+                  ),
+
+                // Success QR Detected Overlay
+                if (_qrCardDetected && _detectedQrPayload != null)
+                  QrDetectedOverlay(payload: _detectedQrPayload!),
 
                 // Top actions bar
                 ScanStatusBar(
@@ -304,68 +358,69 @@ class _SmartScanScreenState extends State<SmartScanScreen> {
                 ),
 
                 // Shutter controls overlay
-                Positioned(
-                  bottom: 32,
-                  left: 0,
-                  right: 0,
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // Gallery Picker Button
-                          GestureDetector(
-                            onTap: _pickFromGallery,
-                            child: Container(
-                              width: 52,
-                              height: 52,
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.5),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.2),
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: const Icon(
-                                LucideIcons.image,
-                                color: Colors.white,
-                                size: 22,
-                              ),
-                            ),
-                          ),
-
-                          // Manual Shutter Button
-                          GestureDetector(
-                            onTap: _manualCapture,
-                            child: Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 4,
-                                ),
-                              ),
+                if (!_qrCardDetected)
+                  Positioned(
+                    bottom: 32,
+                    left: 0,
+                    right: 0,
+                    child: SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 40),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Gallery Picker Button
+                            GestureDetector(
+                              onTap: _pickFromGallery,
                               child: Container(
-                                margin: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
+                                width: 52,
+                                height: 52,
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.5),
                                   shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.2),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  LucideIcons.image,
+                                  color: Colors.white,
+                                  size: 22,
                                 ),
                               ),
                             ),
-                          ),
 
-                          // Transparent spacer to align shutter in center
-                          const SizedBox(width: 52),
-                        ],
+                            // Manual Shutter Button
+                            GestureDetector(
+                              onTap: _manualCapture,
+                              child: Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 4,
+                                  ),
+                                ),
+                                child: Container(
+                                  margin: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            // Transparent spacer to align shutter in center
+                            const SizedBox(width: 52),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
 
                 // Flash Animation Screen Overlay
                 CaptureAnimation(

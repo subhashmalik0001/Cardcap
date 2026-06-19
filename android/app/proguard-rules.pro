@@ -12,3 +12,6 @@
 
 # Broad suppression for text recognition package warnings if any other language is referenced
 -dontwarn com.google.mlkit.vision.text.**
+
+# Suppress R8 warnings for ML Kit Barcode Scanning if any warnings arise
+-dontwarn com.google.mlkit.vision.barcode.**
