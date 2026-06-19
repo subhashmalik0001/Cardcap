@@ -764,7 +764,6 @@ class _CardDesignerScreenState extends State<CardDesignerScreen> {
                       child: RepaintBoundary(
                         key: _cardKey,
                         child: CardCanvas(
-                          key: _canvasKey,
                           template: provider.template,
                           fields: provider.visibleFields,
                           fieldPositions: provider.fieldPositions,
