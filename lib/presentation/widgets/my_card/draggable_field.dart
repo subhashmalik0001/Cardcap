@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class DraggableField extends StatefulWidget {
   final String fieldKey;      // 'name', 'title', 'company', 'phone', 'email', 'website', 'address'
@@ -16,6 +17,8 @@ class DraggableField extends StatefulWidget {
   final Function(double)? onResizeEnd;
   final bool isSelected;
   final VoidCallback onTap;
+  final String? fontFamily;
+  final String? fontStyle;
 
   const DraggableField({
     super.key,
@@ -33,6 +36,8 @@ class DraggableField extends StatefulWidget {
     this.onResizeEnd,
     required this.isSelected,
     required this.onTap,
+    this.fontFamily,
+    this.fontStyle,
   });
 
   @override
@@ -141,13 +146,54 @@ class _DraggableFieldState extends State<DraggableField> {
               ],
               Text(
                 widget.value,
-                style: TextStyle(
-                  color: widget.textColor,
-                  fontSize: _localFontSize,
-                  fontWeight: widget.fieldKey == 'name' ? FontWeight.bold : FontWeight.w500,
-                  fontFamily: 'Inter',
-                  decoration: TextDecoration.none,
-                ),
+                style: () {
+                  FontWeight fontWeight = widget.fieldKey == 'name' ? FontWeight.bold : FontWeight.w500;
+                  FontStyle fontStyleVal = FontStyle.normal;
+
+                  if (widget.fontStyle != null) {
+                    switch (widget.fontStyle) {
+                      case 'bold':
+                        fontWeight = FontWeight.bold;
+                        fontStyleVal = FontStyle.normal;
+                        break;
+                      case 'italic':
+                        fontWeight = FontWeight.normal;
+                        fontStyleVal = FontStyle.italic;
+                        break;
+                      case 'bold_italic':
+                        fontWeight = FontWeight.bold;
+                        fontStyleVal = FontStyle.italic;
+                        break;
+                      case 'normal':
+                        fontWeight = FontWeight.normal;
+                        fontStyleVal = FontStyle.normal;
+                        break;
+                    }
+                  }
+
+                  if (widget.fontFamily != null && widget.fontFamily!.isNotEmpty) {
+                    try {
+                      return GoogleFonts.getFont(
+                        widget.fontFamily!,
+                        color: widget.textColor,
+                        fontSize: _localFontSize,
+                        fontWeight: fontWeight,
+                        fontStyle: fontStyleVal,
+                        decoration: TextDecoration.none,
+                      );
+                    } catch (e) {
+                      // Fallback below
+                    }
+                  }
+                  return TextStyle(
+                    color: widget.textColor,
+                    fontSize: _localFontSize,
+                    fontWeight: fontWeight,
+                    fontStyle: fontStyleVal,
+                    fontFamily: 'Inter',
+                    decoration: TextDecoration.none,
+                  );
+                }(),
               ),
             ],
           ),

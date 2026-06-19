@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
-import 'package:card_capture/main.dart';
-import 'package:card_capture/presentation/providers/cards_provider.dart';
-import 'package:card_capture/presentation/providers/scan_provider.dart';
-import 'package:card_capture/data/repositories/card_repository.dart';
+import 'package:nebula/main.dart';
+import 'package:nebula/presentation/providers/cards_provider.dart';
+import 'package:nebula/presentation/providers/scan_provider.dart';
+import 'package:nebula/data/repositories/card_repository.dart';
 
-import 'package:card_capture/presentation/providers/auth_provider.dart';
+import 'package:nebula/presentation/providers/auth_provider.dart';
 
 void main() {
   testWidgets('App splash screen smoke test', (WidgetTester tester) async {
@@ -19,12 +19,12 @@ void main() {
             ChangeNotifierProvider(create: (_) => CardsProvider(repository: repository)),
             ChangeNotifierProvider(create: (_) => ScanProvider(repository: repository)),
           ],
-          child: const CardCaptureApp(),
+          child: const NebulaApp(),
         ),
       );
 
       // Verify splash screen renders title
-      expect(find.text('CardCapture'), findsOneWidget);
+      expect(find.text('Nebula'), findsOneWidget);
     });
   });
 }

@@ -40,9 +40,8 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
     target.build_configurations.each do |config|
-      # Remove any simulator arm64 exclusions to support native Apple Silicon Simulator builds
+      # Remove any arm64 exclusion to compile natively on Apple Silicon simulators
       config.build_settings.delete("EXCLUDED_ARCHS[sdk=iphonesimulator*]")
-      config.build_settings.delete("EXCLUDED_ARCHS")
 
       # Bump deployment target of all pods to at least 15.5
       if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
@@ -54,14 +53,28 @@ post_install do |installer|
     end
   end
 
-  # Remove arm64 exclusions in the main Runner project to build natively
+  # Remove arm64 exclusion for simulator in the main Runner project
   user_project_path = File.join(File.dirname(__FILE__), 'Runner.xcodeproj')
   user_project = Xcodeproj::Project.open(user_project_path)
+  
+  user_project.build_configurations.each do |config|
+    config.build_settings.delete("EXCLUDED_ARCHS[sdk=iphonesimulator*]")
+  end
+
   user_project.targets.each do |target|
     target.build_configurations.each do |config|
       config.build_settings.delete("EXCLUDED_ARCHS[sdk=iphonesimulator*]")
-      config.build_settings.delete("EXCLUDED_ARCHS")
     end
   end
   user_project.save
+
+  # Clean up EXCLUDED_ARCHS from all CocoaPods-generated xcconfig files
+  Dir.glob(File.join(File.dirname(__FILE__), 'Pods/**/*.xcconfig')).each do |file_path|
+    content = File.read(file_path)
+    if content.include?('EXCLUDED_ARCHS[sdk=iphonesimulator*]')
+      new_content = content.gsub(/EXCLUDED_ARCHS\[sdk=iphonesimulator\*\]\s*=\s*arm64/, '')
+      File.write(file_path, new_content)
+    end
+  end
 end
+

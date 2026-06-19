@@ -44,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _showCardBottomSheet(BuildContext context, BusinessCard card) {
+  void _showCardBottomSheet(BuildContext context, BusinessCard card, {int? index}) {
     HapticFeedback.mediumImpact();
     showModalBottomSheet(
       context: context,
@@ -54,6 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       builder: (ctx) => _CardBottomSheet(
         card: card,
+        index: index,
         onSaveToContacts: () => _saveToPhoneContacts(card),
         onDelete: () => _deleteCard(card),
       ),
@@ -176,10 +177,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildCardStack(provider),
 
                     // Quick Contacts Section
-                    _buildQuickContactsSection(quickContacts),
+                    _buildQuickContactsSection(provider, quickContacts),
 
                     // Recent Cards Section
-                    _buildRecentCardsSection(recentCards),
+                    _buildRecentCardsSection(provider, recentCards),
 
                     // Bottom Padding
                     const SizedBox(height: 100),
@@ -222,26 +223,11 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          // App Title
-          Column(
-            children: [
-              Text(
-                'CardCapture',
-                style: AppTypography.displayMedium.copyWith(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'My Cards & Contacts',
-                style: AppTypography.bodyMedium.copyWith(
-                  fontSize: 13,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
+          // App Logo
+          Image.asset(
+            'assets/images/Logo.png',
+            height: 43,
+            fit: BoxFit.contain,
           ),
           // Plus button
           GestureDetector(
@@ -650,7 +636,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildQuickContactsSection(List<BusinessCard> quickContacts) {
+  Widget _buildQuickContactsSection(CardsProvider provider, List<BusinessCard> quickContacts) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -760,7 +746,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               border: Border.all(color: Colors.white, width: 2),
                             ),
                             child: AvatarInitials(
-                              name: card.name,
+                              name: card.displayName,
+                              index: provider.filteredCards.indexOf(card),
                               size: 52,
                               fontSize: 16,
                             ),
@@ -822,7 +809,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildRecentCardsSection(List<BusinessCard> recentCards) {
+  Widget _buildRecentCardsSection(CardsProvider provider, List<BusinessCard> recentCards) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -865,11 +852,13 @@ class _HomeScreenState extends State<HomeScreen> {
               if (index < recentCards.length) {
                 final card = recentCards[index];
                 final formattedDate = DateFormat('MMMM dd, yyyy').format(card.createdAt);
-                final initials = _getInitials(card.name);
-
                 return Expanded(
                   child: GestureDetector(
-                    onTap: () => _showCardBottomSheet(context, card),
+                    onTap: () => _showCardBottomSheet(
+                      context,
+                      card,
+                      index: provider.filteredCards.indexOf(card),
+                    ),
                     child: Container(
                       margin: EdgeInsets.only(right: index < 2 ? 10 : 0),
                       padding: const EdgeInsets.all(12),
@@ -880,23 +869,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.primaryLight,
-                            ),
-                            child: Center(
-                              child: Text(
-                                initials,
-                                style: AppTypography.labelLarge.copyWith(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ),
+                          AvatarInitials(
+                            name: card.displayName,
+                            index: provider.filteredCards.indexOf(card),
+                            size: 48,
+                            fontSize: 16,
                           ),
                           const SizedBox(height: 12),
                           Text(
@@ -995,15 +972,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-  String _getInitials(String? name) {
-    if (name == null || name.isEmpty) return '?';
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.length > 1) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
-    return parts[0][0].toUpperCase();
-  }
 }
 
 class DashedCirclePainter extends CustomPainter {
@@ -1049,11 +1017,13 @@ class _CardBottomSheet extends StatelessWidget {
   final BusinessCard card;
   final VoidCallback onSaveToContacts;
   final VoidCallback onDelete;
+  final int? index;
 
   const _CardBottomSheet({
     required this.card,
     required this.onSaveToContacts,
     required this.onDelete,
+    this.index,
   });
 
   @override
@@ -1079,7 +1049,7 @@ class _CardBottomSheet extends StatelessWidget {
           const SizedBox(height: AppSpacing.xl),
           Row(
             children: [
-              AvatarInitials(name: card.name, size: 44),
+              AvatarInitials(name: card.displayName, index: index, size: 44),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Column(

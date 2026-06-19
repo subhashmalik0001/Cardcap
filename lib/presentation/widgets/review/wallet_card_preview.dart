@@ -31,7 +31,7 @@ class WalletCardPreview extends StatelessWidget {
           Row(
             children: [
               AvatarInitials(
-                name: card.name,
+                name: card.displayName,
                 size: 48,
                 fontSize: 18,
                 backgroundColor: Colors.white,

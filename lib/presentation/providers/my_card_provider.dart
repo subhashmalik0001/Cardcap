@@ -46,7 +46,12 @@ class MyCardProvider extends ChangeNotifier {
   bool _showIcons = true;
   String? _selectedField;
 
+  Map<String, Color> _fieldColors = {};
+  Map<String, String> _fieldFonts = {};
+  Map<String, String> _fieldStyles = {}; // 'bold' / 'italic' / 'bold_italic' / 'normal'
+
   bool _isLoading = false;
+  bool _isSyncing = false;
   String? _error;
 
   // ── Getters ──
@@ -66,7 +71,11 @@ class MyCardProvider extends ChangeNotifier {
   Map<String, double> get textSizes => _textSizes;
   bool get showIcons => _showIcons;
   String? get selectedField => _selectedField;
+  Map<String, Color> get fieldColors => _fieldColors;
+  Map<String, String> get fieldFonts => _fieldFonts;
+  Map<String, String> get fieldStyles => _fieldStyles;
   bool get isLoading => _isLoading;
+  bool get isSyncing => _isSyncing;
   String? get error => _error;
 
   // Initialize and load
@@ -152,6 +161,21 @@ class MyCardProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateFieldColor(String field, Color color) {
+    _fieldColors[field] = color;
+    notifyListeners();
+  }
+
+  void updateFieldFont(String field, String fontFamily) {
+    _fieldFonts[field] = fontFamily;
+    notifyListeners();
+  }
+
+  void updateFieldStyle(String field, String style) {
+    _fieldStyles[field] = style;
+    notifyListeners();
+  }
+
   // ── Storage Operations ──
 
   /// Persist the design locally to SharedPreferences
@@ -180,6 +204,9 @@ class MyCardProvider extends ChangeNotifier {
         photoSize: _photoSize,
         textSizes: _textSizes,
         showIcons: _showIcons,
+        fieldColors: _fieldColors.map((key, val) => MapEntry(key, '0x${val.value.toRadixString(16).toUpperCase()}')),
+        fieldFonts: _fieldFonts,
+        fieldStyles: _fieldStyles,
       );
 
       await prefs.setString(_storageKey, jsonEncode(design.toJson()));
@@ -237,6 +264,16 @@ class MyCardProvider extends ChangeNotifier {
         _photoSize = design.photoSize;
         _textSizes = Map<String, double>.from(design.textSizes);
         _showIcons = design.showIcons;
+
+        _fieldColors = {};
+        design.fieldColors.forEach((key, val) {
+          if (val.isNotEmpty) {
+            final hexColor = val.replaceAll('0x', '');
+            _fieldColors[key] = Color(int.parse(hexColor, radix: 16));
+          }
+        });
+        _fieldFonts = Map<String, String>.from(design.fieldFonts);
+        _fieldStyles = Map<String, String>.from(design.fieldStyles);
 
         final imageString = prefs.getString('${_storageKey}_image');
         if (imageString != null && imageString.isNotEmpty) {
@@ -319,9 +356,29 @@ class MyCardProvider extends ChangeNotifier {
         _photoSize = (cardData['photo_size'] as num?)?.toDouble() ?? 56.0;
         _showIcons = cardData['show_icons'] as bool? ?? true;
         _textSizes = {};
+        _fieldColors = {};
+        _fieldFonts = {};
+        _fieldStyles = {};
         final rawTextSizes = cardData['text_sizes'] as Map<String, dynamic>? ?? {};
         rawTextSizes.forEach((key, val) {
-          _textSizes[key] = (val as num).toDouble();
+          final fieldKey = key.toString();
+          if (val is num) {
+            _textSizes[fieldKey] = val.toDouble();
+          } else if (val is Map) {
+            if (val['size'] != null) {
+              _textSizes[fieldKey] = (val['size'] as num).toDouble();
+            }
+            if (val['color'] != null) {
+              final hexColor = val['color'].toString().replaceAll('0x', '');
+              _fieldColors[fieldKey] = Color(int.parse(hexColor, radix: 16));
+            }
+            if (val['fontFamily'] != null) {
+              _fieldFonts[fieldKey] = val['fontFamily'].toString();
+            }
+            if (val['fontStyle'] != null) {
+              _fieldStyles[fieldKey] = val['fontStyle'].toString();
+            }
+          }
         });
 
         // Update local SharedPreferences Cache
@@ -341,68 +398,97 @@ class MyCardProvider extends ChangeNotifier {
     required MyCardDetails details,
     required Uint8List cardImageBytes,
   }) async {
-    _isLoading = true;
-    _error = null;
     _details = details;
     _savedCardImage = cardImageBytes;
+
+    // Save locally first for offline availability (synchronous/immediate write)
+    await _persistToStorage();
+    
+    notifyListeners();
+
+    // Trigger remote sync asynchronously in background without awaiting it
+    _syncWithServerInBackground();
+  }
+
+  Future<void> _syncWithServerInBackground() async {
+    if (!_apiService.hasToken) return;
+
+    _isSyncing = true;
+    _error = null;
     notifyListeners();
 
     try {
-      // 1. Save locally first for offline availability
-      await _persistToStorage();
+      String? photoBase64;
+      if (_userPhoto != null) {
+        final bytes = await _userPhoto!.readAsBytes();
+        photoBase64 = base64Encode(bytes);
+      }
 
-      // 2. Sync to Server if authenticated
-      if (_apiService.hasToken) {
-        String? photoBase64;
-        if (_userPhoto != null) {
-          final bytes = await _userPhoto!.readAsBytes();
-          photoBase64 = base64Encode(bytes);
-        }
+      if (_savedCardImage == null) return;
+      final cardImageBase64 = base64Encode(_savedCardImage!);
 
-        final cardImageBase64 = base64Encode(cardImageBytes);
-
-        final Map<String, Map<String, double>> fieldPositionsJson = {};
-        _fieldPositions.forEach((key, offset) {
-          fieldPositionsJson[key] = {
-            'dx': offset.dx,
-            'dy': offset.dy,
-          };
-        });
-
-        final body = {
-          'details': details.toJson(),
-          'templateId': _selectedTemplate.id,
-          'fieldPositions': fieldPositionsJson,
-          'photoShape': _photoShape.name,
-          'textColor': '0x${_textColor.value.toRadixString(16).toUpperCase()}',
-          'visibleFields': _visibleFields,
-          'cardRatio': _cardRatio,
-          'photoSize': _photoSize,
-          'textSizes': _textSizes,
-          'showIcons': _showIcons,
-          if (photoBase64 != null) 'photoBase64': photoBase64,
-          if (_photoUrl != null) 'photoUrl': _photoUrl,
-          'cardImageBase64': cardImageBase64,
+      final Map<String, Map<String, double>> fieldPositionsJson = {};
+      _fieldPositions.forEach((key, offset) {
+        fieldPositionsJson[key] = {
+          'dx': offset.dx,
+          'dy': offset.dy,
         };
+      });
 
-        final response = await _apiService.saveMyCard(body);
+      // Construct nested text sizes for server
+      final Map<String, dynamic> textSizesJson = {};
+      final Set<String> allStyledFields = {
+        ..._textSizes.keys,
+        ..._fieldColors.keys,
+        ..._fieldFonts.keys,
+        ..._fieldStyles.keys,
+      };
+      for (final field in allStyledFields) {
+        final size = _textSizes[field] ?? (field == 'name' ? 14.0 : 11.0);
+        final color = _fieldColors[field];
+        final font = _fieldFonts[field];
+        final style = _fieldStyles[field];
 
-        final cardData = response['card'];
-        if (cardData != null) {
-          _photoUrl = cardData['photo_url'] as String?;
-          _cardImageUrl = cardData['card_image_url'] as String?;
-          _userPhoto = null; // Remote URL replaces local file
+        textSizesJson[field] = {
+          'size': size,
+          if (color != null) 'color': '0x${color.value.toRadixString(16).toUpperCase()}',
+          if (font != null) 'fontFamily': font,
+          if (style != null) 'fontStyle': style,
+        };
+      }
 
-          // Re-persist with the backend image URLs included
-          await _persistToStorage();
-        }
+      final body = {
+        'details': _details!.toJson(),
+        'templateId': _selectedTemplate.id,
+        'fieldPositions': fieldPositionsJson,
+        'photoShape': _photoShape.name,
+        'textColor': '0x${_textColor.value.toRadixString(16).toUpperCase()}',
+        'visibleFields': _visibleFields,
+        'cardRatio': _cardRatio,
+        'photoSize': _photoSize,
+        'textSizes': textSizesJson,
+        'showIcons': _showIcons,
+        if (photoBase64 != null) 'photoBase64': photoBase64,
+        if (_photoUrl != null) 'photoUrl': _photoUrl,
+        'cardImageBase64': cardImageBase64,
+      };
+
+      final response = await _apiService.saveMyCard(body);
+
+      final cardData = response['card'];
+      if (cardData != null) {
+        _photoUrl = cardData['photo_url'] as String?;
+        _cardImageUrl = cardData['card_image_url'] as String?;
+        _userPhoto = null; // Remote URL replaces local file
+
+        // Re-persist with the backend image URLs included
+        await _persistToStorage();
       }
     } catch (e) {
       _error = e.toString();
-      print('MyCardProvider: saveCard error: $e');
-      throw Exception('Failed to sync card to server: $e');
+      print('MyCardProvider: background sync error: $e');
     } finally {
-      _isLoading = false;
+      _isSyncing = false;
       notifyListeners();
     }
   }

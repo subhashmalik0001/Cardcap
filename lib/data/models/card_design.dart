@@ -13,6 +13,9 @@ class CardDesign {
   final double photoSize;
   final Map<String, double> textSizes;
   final bool showIcons;
+  final Map<String, String> fieldColors; // fieldKey -> hexColor
+  final Map<String, String> fieldFonts;  // fieldKey -> fontFamily
+  final Map<String, String> fieldStyles; // fieldKey -> 'bold' / 'italic' / 'bold_italic' / 'normal'
 
   const CardDesign({
     required this.details,
@@ -27,6 +30,9 @@ class CardDesign {
     this.photoSize = 56.0,
     this.textSizes = const {},
     this.showIcons = true,
+    this.fieldColors = const {},
+    this.fieldFonts = const {},
+    this.fieldStyles = const {},
   });
 
   CardDesign copyWith({
@@ -42,6 +48,9 @@ class CardDesign {
     double? photoSize,
     Map<String, double>? textSizes,
     bool? showIcons,
+    Map<String, String>? fieldColors,
+    Map<String, String>? fieldFonts,
+    Map<String, String>? fieldStyles,
   }) {
     return CardDesign(
       details: details ?? this.details,
@@ -56,6 +65,9 @@ class CardDesign {
       photoSize: photoSize ?? this.photoSize,
       textSizes: textSizes ?? this.textSizes,
       showIcons: showIcons ?? this.showIcons,
+      fieldColors: fieldColors ?? this.fieldColors,
+      fieldFonts: fieldFonts ?? this.fieldFonts,
+      fieldStyles: fieldStyles ?? this.fieldStyles,
     );
   }
 
@@ -73,6 +85,9 @@ class CardDesign {
       'photoSize': photoSize,
       'textSizes': textSizes,
       'showIcons': showIcons,
+      'fieldColors': fieldColors,
+      'fieldFonts': fieldFonts,
+      'fieldStyles': fieldStyles,
     };
   }
 
@@ -103,6 +118,27 @@ class CardDesign {
       parsedTextSizes[key.toString()] = (val as num?)?.toDouble() ?? 11.0;
     });
 
+    // Parse fieldColors map safely
+    final rawColors = json['fieldColors'] as Map<dynamic, dynamic>? ?? {};
+    final Map<String, String> parsedColors = {};
+    rawColors.forEach((key, val) {
+      parsedColors[key.toString()] = val?.toString() ?? '';
+    });
+
+    // Parse fieldFonts map safely
+    final rawFonts = json['fieldFonts'] as Map<dynamic, dynamic>? ?? {};
+    final Map<String, String> parsedFonts = {};
+    rawFonts.forEach((key, val) {
+      parsedFonts[key.toString()] = val?.toString() ?? '';
+    });
+
+    // Parse fieldStyles map safely
+    final rawStyles = json['fieldStyles'] as Map<dynamic, dynamic>? ?? {};
+    final Map<String, String> parsedStyles = {};
+    rawStyles.forEach((key, val) {
+      parsedStyles[key.toString()] = val?.toString() ?? 'normal';
+    });
+
     return CardDesign(
       details: MyCardDetails.fromJson(json['details'] as Map<String, dynamic>? ?? {}),
       templateId: json['templateId'] as String? ?? 'classic',
@@ -116,6 +152,9 @@ class CardDesign {
       photoSize: (json['photoSize'] as num?)?.toDouble() ?? 56.0,
       textSizes: parsedTextSizes,
       showIcons: json['showIcons'] as bool? ?? true,
+      fieldColors: parsedColors,
+      fieldFonts: parsedFonts,
+      fieldStyles: parsedStyles,
     );
   }
 }

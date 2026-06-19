@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/services/api_service.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -51,6 +52,17 @@ class AuthProvider extends ChangeNotifier {
       final String token = data['token'];
       _user = data['user'] as Map<String, dynamic>;
       await _apiService.setToken(token);
+
+      // Sync auth session to Supabase client for storage bucket RLS policies
+      try {
+        await Supabase.instance.client.auth.signInWithPassword(
+          email: email,
+          password: password,
+        );
+      } catch (e) {
+        print("Failed to sync register session to Supabase client: $e");
+      }
+
       return true;
     } catch (e) {
       _error = e.toString().replaceAll('Exception: ', '');
@@ -72,6 +84,17 @@ class AuthProvider extends ChangeNotifier {
       final String token = data['token'];
       _user = data['user'] as Map<String, dynamic>;
       await _apiService.setToken(token);
+
+      // Sync auth session to Supabase client for storage bucket RLS policies
+      try {
+        await Supabase.instance.client.auth.signInWithPassword(
+          email: email,
+          password: password,
+        );
+      } catch (e) {
+        print("Failed to sync login session to Supabase client: $e");
+      }
+
       return true;
     } catch (e) {
       _error = e.toString().replaceAll('Exception: ', '');
@@ -118,6 +141,10 @@ class AuthProvider extends ChangeNotifier {
     try {
       await _apiService.logout();
       _user = null;
+      // Sign out from Supabase client
+      try {
+        await Supabase.instance.client.auth.signOut();
+      } catch (_) {}
     } catch (e) {
       _error = e.toString();
     } finally {

@@ -14,6 +14,7 @@ class ContactCard extends StatefulWidget {
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final VoidCallback? onMenuTap;
+  final int? index;
 
   const ContactCard({
     super.key,
@@ -21,6 +22,7 @@ class ContactCard extends StatefulWidget {
     this.onTap,
     this.onLongPress,
     this.onMenuTap,
+    this.index,
   });
 
   @override
@@ -75,7 +77,11 @@ class _ContactCardState extends State<ContactCard> {
               // Header row
               Row(
                 children: [
-                  AvatarInitials(name: widget.card.name, size: 44),
+                  AvatarInitials(
+                    name: widget.card.displayName,
+                    index: widget.index,
+                    size: 44,
+                  ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Column(

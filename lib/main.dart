@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/theme/app_theme.dart';
 import 'data/repositories/card_repository.dart';
 import 'presentation/providers/cards_provider.dart';
@@ -12,8 +13,13 @@ import 'presentation/screens/review/review_screen.dart';
 import 'presentation/screens/auth/login_screen.dart';
 import 'data/models/business_card.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  await Supabase.initialize(
+    url: 'https://zsjinlmpmbxkjghxhoqh.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzamlubG1wbWJ4a2pnaHhob3FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MDM1NjQsImV4cCI6MjA5NzA3OTU2NH0.FrSaNtVGp1U2lp_vtzEK7GFvXLOYoKXov5kMRit_cWw',
+  );
   
   final cardRepository = CardRepository();
 
@@ -33,18 +39,18 @@ void main() {
           create: (_) => MyCardProvider()..init(),
         ),
       ],
-      child: const CardCaptureApp(),
+      child: const NebulaApp(),
     ),
   );
 }
 
-class CardCaptureApp extends StatelessWidget {
-  const CardCaptureApp({super.key});
+class NebulaApp extends StatelessWidget {
+  const NebulaApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'CardCapture',
+      title: 'Nebula',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       initialRoute: '/',

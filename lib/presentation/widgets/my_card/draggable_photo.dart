@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:card_capture/presentation/providers/my_card_provider.dart';
+import 'package:nebula/presentation/providers/my_card_provider.dart';
 import 'hexagon_clipper.dart';
 
 class DraggablePhoto extends StatefulWidget {

@@ -1,7 +1,7 @@
 {
-  "name": "cardcapture-backend",
+  "name": "nebula-backend",
   "version": "1.0.0",
-  "description": "CardCapture API — Node.js/Express backend for business card management",
+  "description": "Nebula API — Node.js/Express backend for business card management",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

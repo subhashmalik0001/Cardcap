@@ -1,9 +1,9 @@
 class AppConstants {
   AppConstants._();
 
-  static const String appName = 'CardCapture';
+  static const String appName = 'Nebula';
   static const String appTagline = 'SCAN · ORGANIZE · CONNECT';
-  static const String storageKey = 'card_capture_cards';
+  static const String storageKey = 'nebula_cards';
   static const Duration splashDuration = Duration(milliseconds: 2800);
   static const Duration animationFast = Duration(milliseconds: 200);
   static const Duration animationDefault = Duration(milliseconds: 280);

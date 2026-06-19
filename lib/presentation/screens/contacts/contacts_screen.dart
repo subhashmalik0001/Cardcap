@@ -32,7 +32,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
     });
   }
 
-  void _showCardBottomSheet(BuildContext context, BusinessCard card) {
+  void _showCardBottomSheet(BuildContext context, BusinessCard card, {int? index}) {
     HapticFeedback.mediumImpact();
     showModalBottomSheet(
       context: context,
@@ -42,6 +42,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
       ),
       builder: (ctx) => _CardBottomSheet(
         card: card,
+        index: index,
         onSaveToContacts: () => _saveToPhoneContacts(card),
         onDelete: () => _deleteCard(card),
       ),
@@ -202,6 +203,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
                           return ContactCard(
                             key: ValueKey(card.id),
                             card: card,
+                            index: index,
                             onTap: () {
                               Navigator.of(context).pushNamed(
                                 '/review',
@@ -209,9 +211,9 @@ class _ContactsScreenState extends State<ContactsScreen> {
                               );
                             },
                             onLongPress: () =>
-                                _showCardBottomSheet(context, card),
+                                _showCardBottomSheet(context, card, index: index),
                             onMenuTap: () =>
-                                _showCardBottomSheet(context, card),
+                                _showCardBottomSheet(context, card, index: index),
                           );
                         },
                         childCount: provider.filteredCards.length,
@@ -281,11 +283,13 @@ class _CardBottomSheet extends StatelessWidget {
   final BusinessCard card;
   final VoidCallback onSaveToContacts;
   final VoidCallback onDelete;
+  final int? index;
 
   const _CardBottomSheet({
     required this.card,
     required this.onSaveToContacts,
     required this.onDelete,
+    this.index,
   });
 
   @override
@@ -314,7 +318,11 @@ class _CardBottomSheet extends StatelessWidget {
           // Avatar + Name
           Row(
             children: [
-              AvatarInitials(name: card.name, size: 44),
+              AvatarInitials(
+                name: card.displayName,
+                index: index,
+                size: 44,
+              ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Column(

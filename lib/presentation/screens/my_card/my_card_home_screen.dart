@@ -298,7 +298,11 @@ class _MyCardHomeScreenState extends State<MyCardHomeScreen> {
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
+        padding: const EdgeInsets.only(
+          left: AppSpacing.xxl,
+          right: AppSpacing.xxl,
+          bottom: 80,
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -464,7 +468,7 @@ class _MyCardHomeScreenState extends State<MyCardHomeScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 120),
         ],
       ),
     );
@@ -496,7 +500,32 @@ class _MyCardHomeScreenState extends State<MyCardHomeScreen> {
             onPressed: () async {
               Navigator.of(ctx).pop();
               HapticFeedback.mediumImpact();
-              await context.read<MyCardProvider>().deleteCard();
+
+              // Show blocking progress dialog
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const Center(
+                  child: CircularProgressIndicator(color: Color(0xFF6A3EEB)),
+                ),
+              );
+
+              try {
+                await context.read<MyCardProvider>().deleteCard();
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete card: $e'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              } finally {
+                if (mounted) {
+                  Navigator.of(context).pop(); // Close blocking progress dialog
+                }
+              }
             },
             child: Text(
               'Delete',
@@ -526,6 +555,18 @@ class _MyCardHomeScreenState extends State<MyCardHomeScreen> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      if (provider.isLoading || provider.isSyncing)
+                        const Padding(
+                          padding: EdgeInsets.only(right: 8),
+                          child: SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Color(0xFF6A3EEB),
+                            ),
+                          ),
+                        ),
                       if (hasCard)
                         IconButton(
                           onPressed: _deleteCard,
@@ -555,7 +596,7 @@ class _MyCardHomeScreenState extends State<MyCardHomeScreen> {
                   ),
                 ),
                 Expanded(
-                  child: provider.isLoading
+                  child: provider.isLoading && !hasCard
                       ? const Center(
                           child: CircularProgressIndicator(color: Color(0xFF6A3EEB)),
                         )

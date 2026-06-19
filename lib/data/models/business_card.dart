@@ -14,6 +14,8 @@ class BusinessCard extends Equatable {
   final String? twitter;
   final String? notes;
   final DateTime createdAt;
+  final String? cardImageUrl;
+  final String? scanMethod;
 
   const BusinessCard({
     required this.id,
@@ -28,6 +30,8 @@ class BusinessCard extends Equatable {
     this.twitter,
     this.notes,
     required this.createdAt,
+    this.cardImageUrl,
+    this.scanMethod,
   });
 
   BusinessCard copyWith({
@@ -43,6 +47,8 @@ class BusinessCard extends Equatable {
     String? twitter,
     String? notes,
     DateTime? createdAt,
+    String? cardImageUrl,
+    String? scanMethod,
   }) {
     return BusinessCard(
       id: id ?? this.id,
@@ -57,6 +63,8 @@ class BusinessCard extends Equatable {
       twitter: twitter ?? this.twitter,
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
+      cardImageUrl: cardImageUrl ?? this.cardImageUrl,
+      scanMethod: scanMethod ?? this.scanMethod,
     );
   }
 
@@ -75,6 +83,10 @@ class BusinessCard extends Equatable {
       'notes': notes,
       'createdAt': createdAt.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
+      'cardImageUrl': cardImageUrl,
+      'card_image_url': cardImageUrl,
+      'scanMethod': scanMethod,
+      'scan_method': scanMethod,
     };
   }
 
@@ -98,6 +110,8 @@ class BusinessCard extends Equatable {
       createdAt: rawCreatedAt != null 
           ? DateTime.parse(rawCreatedAt as String) 
           : DateTime.now(),
+      cardImageUrl: json['cardImageUrl'] as String? ?? json['card_image_url'] as String?,
+      scanMethod: json['scanMethod'] as String? ?? json['scan_method'] as String?,
     );
   }
 
@@ -135,5 +149,7 @@ class BusinessCard extends Equatable {
         twitter,
         notes,
         createdAt,
+        cardImageUrl,
+        scanMethod,
       ];
 }

@@ -54,8 +54,12 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Logo card icon on violet background
-            _buildCardIcon()
+            // Logo image asset on violet background
+            Image.asset(
+              'assets/images/Logo.png',
+              width: 120,
+              height: 120,
+            )
                 .animate()
                 .scale(
                   begin: const Offset(0.7, 0.7),
@@ -120,92 +124,6 @@ class _SplashScreenState extends State<SplashScreen> {
                   delay: (index * 200).ms,
                 );
           }),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCardIcon() {
-    return SizedBox(
-      width: 80,
-      height: 80,
-      child: Stack(
-        children: [
-          // White card background
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: AppColors.elevatedShadow,
-            ),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _line(40, 3),
-                  const SizedBox(height: 6),
-                  _line(30, 2.5),
-                  const SizedBox(height: 5),
-                  _line(20, 2),
-                ],
-              ),
-            ),
-          ),
-
-          // Corner brackets — primary violet
-          _bracket(top: 4, left: 4, isTop: true, isLeft: true),
-          _bracket(top: 4, right: 4, isTop: true, isLeft: false),
-          _bracket(bottom: 4, left: 4, isTop: false, isLeft: true),
-          _bracket(bottom: 4, right: 4, isTop: false, isLeft: false),
-        ],
-      ),
-    );
-  }
-
-  Widget _line(double width, double height) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(height / 2),
-      ),
-    );
-  }
-
-  Widget _bracket({
-    double? top,
-    double? bottom,
-    double? left,
-    double? right,
-    required bool isTop,
-    required bool isLeft,
-  }) {
-    return Positioned(
-      top: top,
-      bottom: bottom,
-      left: left,
-      right: right,
-      child: Container(
-        width: 12,
-        height: 12,
-        decoration: BoxDecoration(
-          border: Border(
-            top: isTop
-                ? const BorderSide(color: AppColors.primary, width: 2)
-                : BorderSide.none,
-            bottom: !isTop
-                ? const BorderSide(color: AppColors.primary, width: 2)
-                : BorderSide.none,
-            left: isLeft
-                ? const BorderSide(color: AppColors.primary, width: 2)
-                : BorderSide.none,
-            right: !isLeft
-                ? const BorderSide(color: AppColors.primary, width: 2)
-                : BorderSide.none,
-          ),
         ),
       ),
     );

@@ -98,16 +98,18 @@ class _LoginScreenState extends State<LoginScreen> {
                               color: AppColors.primaryLight,
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Icon(
-                              LucideIcons.wallet,
-                              color: AppColors.primary,
-                              size: 36,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Image.asset(
+                                'assets/images/Icon.png',
+                                fit: BoxFit.contain,
+                              ),
                             ),
                           ),
                         ),
                         const SizedBox(height: 24),
                         Text(
-                          'CardCapture',
+                          'Nebula',
                           textAlign: TextAlign.center,
                           style: AppTypography.displayLarge.copyWith(
                             color: AppColors.textPrimary,

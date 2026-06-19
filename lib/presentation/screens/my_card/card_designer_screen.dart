@@ -400,8 +400,9 @@ class _CardDesignerScreenState extends State<CardDesignerScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Your card is ready to share!'),
+            content: Text('Card saved successfully! Syncing with server...'),
             backgroundColor: AppColors.success,
+            duration: Duration(seconds: 2),
           ),
         );
         // Navigate back to Home
@@ -786,117 +787,123 @@ class _CardDesignerScreenState extends State<CardDesignerScreen> {
                           onResizeField: (field, newSize) => provider.updateTextSize(field, newSize),
                           selectedField: provider.selectedField,
                           onSelectField: (field) => provider.selectField(field),
+                          fieldColors: provider.fieldColors,
+                          fieldFonts: provider.fieldFonts,
+                          fieldStyles: provider.fieldStyles,
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
 
-                  // 3. Fields toggle panel
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Fields on Card',
-                                style: AppTypography.labelSmall.copyWith(
-                                  color: AppColors.textSecondary,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1.0,
+                  // 3. Conditional Customization Panel / Fields toggle panel
+                  if (provider.selectedField != null)
+                    _buildSelectedFieldPanel(provider)
+                  else
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Fields on Card',
+                                  style: AppTypography.labelSmall.copyWith(
+                                    color: AppColors.textSecondary,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 1.0,
+                                  ),
                                 ),
-                              ),
-                              Row(
-                                children: [
-                                  const Text(
-                                    'Icons',
+                                Row(
+                                  children: [
+                                    const Text(
+                                      'Icons',
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Transform.scale(
+                                      scale: 0.75,
+                                      child: Switch(
+                                        value: provider.showIcons,
+                                        activeThumbColor: const Color(0xFF6A3EEB),
+                                        activeTrackColor: const Color(0xFFEDE8FC),
+                                        onChanged: (val) {
+                                          HapticFeedback.selectionClick();
+                                          provider.setShowIcons(val);
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: provider.visibleFields.keys.map((fieldKey) {
+                                final isVisible = provider.visibleFields[fieldKey] == true;
+                                String label = fieldKey.toUpperCase();
+                                if (fieldKey == 'name') label = 'NAME *';
+
+                                return FilterChip(
+                                  label: Text(
+                                    label,
                                     style: TextStyle(
                                       fontFamily: 'Inter',
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textSecondary,
+                                      fontSize: 11,
+                                      fontWeight: isVisible ? FontWeight.w600 : FontWeight.w500,
+                                      color: isVisible
+                                          ? const Color(0xFF6A3EEB)
+                                          : AppColors.textSecondary,
                                     ),
                                   ),
-                                  const SizedBox(width: 4),
-                                  Transform.scale(
-                                    scale: 0.75,
-                                    child: Switch(
-                                      value: provider.showIcons,
-                                      activeThumbColor: const Color(0xFF6A3EEB),
-                                      activeTrackColor: const Color(0xFFEDE8FC),
-                                      onChanged: (val) {
-                                        HapticFeedback.selectionClick();
-                                        provider.setShowIcons(val);
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: provider.visibleFields.keys.map((fieldKey) {
-                              final isVisible = provider.visibleFields[fieldKey] == true;
-                              String label = fieldKey.toUpperCase();
-                              if (fieldKey == 'name') label = 'NAME *';
-
-                              return FilterChip(
-                                label: Text(
-                                  label,
-                                  style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 11,
-                                    fontWeight: isVisible ? FontWeight.w600 : FontWeight.w500,
+                                  selected: isVisible,
+                                  selectedColor: const Color(0xFFEDE8FC),
+                                  checkmarkColor: const Color(0xFF6A3EEB),
+                                  showCheckmark: isVisible,
+                                  side: BorderSide(
                                     color: isVisible
                                         ? const Color(0xFF6A3EEB)
-                                        : AppColors.textSecondary,
+                                        : const Color(0xFFE0E0E0),
+                                    width: isVisible ? 1.5 : 0.8,
                                   ),
-                                ),
-                                selected: isVisible,
-                                selectedColor: const Color(0xFFEDE8FC),
-                                checkmarkColor: const Color(0xFF6A3EEB),
-                                showCheckmark: isVisible,
-                                side: BorderSide(
-                                  color: isVisible
-                                      ? const Color(0xFF6A3EEB)
-                                      : const Color(0xFFE0E0E0),
-                                  width: isVisible ? 1.5 : 0.8,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                onSelected: (val) {
-                                  if (fieldKey == 'name') return; // Cannot disable name
-                                  HapticFeedback.selectionClick();
-                                  provider.toggleField(fieldKey, val);
-                                },
-                              );
-                            }).toList(),
-                          ),
-                        ],
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  onSelected: (val) {
+                                    if (fieldKey == 'name') return; // Cannot disable name
+                                    HapticFeedback.selectionClick();
+                                    provider.toggleField(fieldKey, val);
+                                  },
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
                   const SizedBox(height: AppSpacing.md),
 
                   // 4. Tools row
@@ -991,6 +998,376 @@ class _CardDesignerScreenState extends State<CardDesignerScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSelectedFieldPanel(MyCardProvider provider) {
+    final field = provider.selectedField!;
+    final isPhoto = field == 'photo';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      isPhoto ? LucideIcons.camera : LucideIcons.type,
+                      color: const Color(0xFF6A3EEB),
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      isPhoto ? 'Edit Photo Layout' : 'Style Field: ${field.toUpperCase()}',
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    provider.selectField(null);
+                  },
+                  icon: const Icon(LucideIcons.x, size: 16, color: AppColors.textTertiary),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (isPhoto) ...[
+              const Text(
+                'Manual Size (Height & Width)',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Slider(
+                      value: provider.photoSize.clamp(30.0, 150.0),
+                      min: 30.0,
+                      max: 150.0,
+                      activeColor: const Color(0xFF6A3EEB),
+                      inactiveColor: const Color(0xFFEDE8FC),
+                      onChanged: (newSize) {
+                        provider.setPhotoSize(newSize);
+                      },
+                    ),
+                  ),
+                  Text(
+                    '${provider.photoSize.round()}px',
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Photo Shape',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: PhotoShape.values.map((shape) {
+                  final isSelected = provider.photoShape == shape;
+                  return GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      provider.setPhotoShape(shape);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFFEDE8FC) : const Color(0xFFF5F5F5),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected ? const Color(0xFF6A3EEB) : Colors.transparent,
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        _getShapeLabel(shape),
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 10,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected ? const Color(0xFF6A3EEB) : AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ] else ...[
+              const Text(
+                'Manual Text Size',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Slider(
+                      value: (provider.textSizes[field] ?? (field == 'name' ? 14.0 : 11.0)).clamp(8.0, 36.0),
+                      min: 8.0,
+                      max: 36.0,
+                      activeColor: const Color(0xFF6A3EEB),
+                      inactiveColor: const Color(0xFFEDE8FC),
+                      onChanged: (newSize) {
+                        provider.updateTextSize(field, newSize);
+                      },
+                    ),
+                  ),
+                  Text(
+                    '${(provider.textSizes[field] ?? (field == 'name' ? 14.0 : 11.0)).round()}pt',
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Font Family',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 36,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  children: [
+                    'Inter',
+                    'Plus Jakarta Sans',
+                    'Outfit',
+                    'Playfair Display',
+                    'Courier Prime',
+                    'Pacifico',
+                    'Lora'
+                  ].map((font) {
+                    final currentFont = provider.fieldFonts[field] ?? 'Inter';
+                    final isSelected = currentFont == font;
+                    return GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        provider.updateFieldFont(field, font);
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isSelected ? const Color(0xFFEDE8FC) : const Color(0xFFF5F5F5),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isSelected ? const Color(0xFF6A3EEB) : Colors.transparent,
+                            width: 1,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            font,
+                            style: TextStyle(
+                              fontFamily: font == 'Plus Jakarta Sans' ? 'PlusJakartaSans' : (font == 'Inter' ? 'Inter' : 'Courier'),
+                              fontSize: 10,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                              color: isSelected ? const Color(0xFF6A3EEB) : AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Font Style',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _buildStyleButton(provider, field, 'normal', 'Normal'),
+                  const SizedBox(width: 8),
+                  _buildStyleButton(provider, field, 'bold', 'Bold'),
+                  const SizedBox(width: 8),
+                  _buildStyleButton(provider, field, 'italic', 'Italic'),
+                  const SizedBox(width: 8),
+                  _buildStyleButton(provider, field, 'bold_italic', 'Bold Italic'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Text Color',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 32,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  children: [
+                    Colors.black,
+                    Colors.white,
+                    const Color(0xFF6A3EEB),
+                    const Color(0xFFE84040),
+                    const Color(0xFF12A664),
+                    const Color(0xFFF0B31B),
+                    const Color(0xFFFF4500),
+                    const Color(0xFF1A1A2E),
+                    const Color(0xFF6B6B6B),
+                    const Color(0xFFEDE8FC),
+                  ].map((color) {
+                    final currentHex = provider.fieldColors[field];
+                    final bool isSelected = currentHex != null
+                        ? currentHex.value == color.value
+                        : provider.textColor.value == color.value;
+
+                    return GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        provider.updateFieldColor(field, color);
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 10),
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected
+                                ? const Color(0xFF6A3EEB)
+                                : color == Colors.white
+                                    ? Colors.grey[300]!
+                                    : Colors.transparent,
+                            width: isSelected ? 2.5 : 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 2,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                        child: isSelected
+                            ? Icon(
+                                LucideIcons.check,
+                                color: color == Colors.white || color == const Color(0xFFEDE8FC)
+                                    ? const Color(0xFF6A3EEB)
+                                    : Colors.white,
+                                size: 12,
+                              )
+                            : null,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStyleButton(MyCardProvider provider, String field, String styleVal, String label) {
+    final currentStyle = provider.fieldStyles[field] ?? 'normal';
+    final isSelected = currentStyle == styleVal;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          provider.updateFieldStyle(field, styleVal);
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFEDE8FC) : const Color(0xFFF5F5F5),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isSelected ? const Color(0xFF6A3EEB) : Colors.transparent,
+              width: 1,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected ? const Color(0xFF6A3EEB) : AppColors.textSecondary,
+                fontStyle: styleVal.contains('italic') ? FontStyle.italic : FontStyle.normal,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

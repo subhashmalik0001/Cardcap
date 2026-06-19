@@ -273,12 +273,17 @@ class StatisticsScreen extends StatelessWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                entry.key,
-                                style: AppTypography.titleMedium.copyWith(
-                                  fontWeight: FontWeight.w600,
+                              Expanded(
+                                child: Text(
+                                  entry.key,
+                                  style: AppTypography.titleMedium.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
+                              const SizedBox(width: AppSpacing.sm),
                               Text(
                                 '${(percent * 100).toStringAsFixed(0)}%',
                                 style: AppTypography.labelSmall.copyWith(

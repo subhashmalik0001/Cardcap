@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:card_capture/data/models/my_card_details.dart';
-import 'package:card_capture/data/models/card_template.dart';
-import 'package:card_capture/presentation/providers/my_card_provider.dart';
+import 'package:nebula/data/models/my_card_details.dart';
+import 'package:nebula/data/models/card_template.dart';
+import 'package:nebula/presentation/providers/my_card_provider.dart';
 import 'draggable_field.dart';
 import 'draggable_photo.dart';
 import 'templates/classic_template.dart';
@@ -33,6 +33,9 @@ class CardCanvas extends StatelessWidget {
   final Function(String, double)? onResizeField;
   final String? selectedField;
   final Function(String?)? onSelectField;
+  final Map<String, Color> fieldColors;
+  final Map<String, String> fieldFonts;
+  final Map<String, String> fieldStyles;
 
   const CardCanvas({
     super.key,
@@ -56,6 +59,9 @@ class CardCanvas extends StatelessWidget {
     this.onResizeField,
     this.selectedField,
     this.onSelectField,
+    this.fieldColors = const {},
+    this.fieldFonts = const {},
+    this.fieldStyles = const {},
   });
 
   Offset _getFieldPosition(String key, double cardWidth, double cardHeight) {
@@ -191,9 +197,8 @@ class CardCanvas extends StatelessWidget {
 
                   // Render if toggled visible and holds data
                   if (fields[key] == true && val.isNotEmpty) {
-                    // Split template sets left side text to white, right side to dark text
-                    Color displayColor = textColor;
-                    if (template.id == 'split') {
+                    Color displayColor = fieldColors[key] ?? textColor;
+                    if (template.id == 'split' && !fieldColors.containsKey(key)) {
                       final Offset pos = _getFieldPosition(key, cardWidth, cardHeight);
                       if (pos.dx < cardWidth * 0.5) {
                         displayColor = Colors.white;
@@ -223,6 +228,8 @@ class CardCanvas extends StatelessWidget {
                           onSelectField!(key);
                         }
                       },
+                      fontFamily: fieldFonts[key],
+                      fontStyle: fieldStyles[key],
                     );
                   }
                   return const SizedBox.shrink();
