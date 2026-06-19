@@ -527,7 +527,7 @@ class _MyCardHomeScreenState extends State<MyCardHomeScreen> {
                 }
               } finally {
                 if (mounted) {
-                  Navigator.of(context).pop(); // Close blocking progress dialog
+                  Navigator.of(context, rootNavigator: true).pop(); // Close blocking progress dialog
                 }
               }
             },

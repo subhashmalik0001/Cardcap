@@ -395,7 +395,7 @@ class _CardDesignerScreenState extends State<CardDesignerScreen> {
       );
 
       // Close loading dialog
-      if (mounted) Navigator.pop(context);
+      if (mounted) Navigator.of(context, rootNavigator: true).pop();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -410,7 +410,7 @@ class _CardDesignerScreenState extends State<CardDesignerScreen> {
       }
     } catch (e) {
       // Close loading dialog if open
-      if (mounted) Navigator.pop(context);
+      if (mounted) Navigator.of(context, rootNavigator: true).pop();
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
