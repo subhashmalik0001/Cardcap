@@ -113,14 +113,51 @@ class MyCardQrSection extends StatelessWidget {
                           color: Color(0x1F6A3EEB), blurRadius: 32,
                         )],
                       ),
-                      child: QrImageView(
-                        data: qrString,
-                        size: 280,
-                        eyeStyle: const QrEyeStyle(
-                          eyeShape: QrEyeShape.circle, color: Color(0xFF0A0A0A)),
-                        dataModuleStyle: const QrDataModuleStyle(
-                          dataModuleShape: QrDataModuleShape.circle, 
-                          color: Color(0xFF0A0A0A)),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          QrImageView(
+                            data: qrString,
+                            version: QrVersions.auto,
+                            errorCorrectionLevel: QrErrorCorrectLevel.H,
+                            size: 280,
+                            backgroundColor: Colors.white,
+                            eyeStyle: const QrEyeStyle(
+                              eyeShape: QrEyeShape.circle, color: Color(0xFF0A0A0A)),
+                            dataModuleStyle: const QrDataModuleStyle(
+                              dataModuleShape: QrDataModuleShape.circle, 
+                              color: Color(0xFF0A0A0A)),
+                            embeddedImage: const AssetImage('assets/images/Icon.png'),
+                            embeddedImageStyle: const QrEmbeddedImageStyle(
+                              size: Size(56, 56),
+                            ),
+                          ),
+                          Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.12),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(28),
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Image.asset(
+                                  'assets/images/Icon.png',
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -163,23 +200,12 @@ class MyCardQrSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final qrString = QrCardService().generateSafeQrString(details);
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 24,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section header row
+          // Section header row (outside the card)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -230,101 +256,152 @@ class MyCardQrSection extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
 
-          // QR code container — framed like a premium scannable tile
+          // The actual card container
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFFFAFAFA),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFF0F0F0), width: 1),
+              color: const Color(0xFFFFFFFF),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x14000000),
+                  blurRadius: 24,
+                  offset: Offset(0, 6),
+                ),
+              ],
             ),
             child: Column(
               children: [
-                // The actual QR widget with branded styling
-                QrImageView(
-                  data: qrString,
-                  version: QrVersions.auto,
-                  size: 200,
-                  backgroundColor: Colors.white,
-                  eyeStyle: const QrEyeStyle(
-                    eyeShape: QrEyeShape.circle,         // rounded corner markers
-                    color: Color(0xFF0A0A0A),
+                // QR code container — framed like a premium scannable tile
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFAFAFA),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFF0F0F0), width: 1),
                   ),
-                  dataModuleStyle: const QrDataModuleStyle(
-                    dataModuleShape: QrDataModuleShape.circle,  // dotted style modules
-                    color: Color(0xFF0A0A0A),
-                  ),
-                  embeddedImage: const AssetImage('assets/images/Icon.png'),
-                  embeddedImageStyle: const QrEmbeddedImageStyle(
-                    size: Size(36, 36),
+                  child: Column(
+                    children: [
+                      // The actual QR widget with branded styling
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          QrImageView(
+                            data: qrString,
+                            version: QrVersions.auto,
+                            errorCorrectionLevel: QrErrorCorrectLevel.H,
+                            size: 200,
+                            backgroundColor: Colors.white,
+                            eyeStyle: const QrEyeStyle(
+                              eyeShape: QrEyeShape.circle,         // rounded corner markers
+                              color: Color(0xFF0A0A0A),
+                            ),
+                            dataModuleStyle: const QrDataModuleStyle(
+                              dataModuleShape: QrDataModuleShape.circle,  // dotted style modules
+                              color: Color(0xFF0A0A0A),
+                            ),
+                            embeddedImage: const AssetImage('assets/images/Icon.png'),
+                            embeddedImageStyle: const QrEmbeddedImageStyle(
+                              size: Size(44, 44),
+                            ),
+                          ),
+                          // White circular background container with shadowed icon
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.12),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(22),
+                              child: Padding(
+                                padding: const EdgeInsets.all(6.0),
+                                child: Image.asset(
+                                  'assets/images/Icon.png',
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 14),
+                      
+                      // Name under QR (like an ID badge)
+                      Text(details.name,
+                           style: const TextStyle(
+                             fontFamily: 'PlusJakartaSans',
+                             fontSize: 15, fontWeight: FontWeight.w700,
+                             color: Color(0xFF0A0A0A),
+                           )),
+                      if (details.company != null && details.company!.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(details.company!,
+                               style: const TextStyle(
+                                 fontFamily: 'Inter', fontSize: 12,
+                                 color: Color(0xFF6B6B6B),
+                               )),
+                        ),
+                    ],
                   ),
                 ),
-                
-                const SizedBox(height: 14),
-                
-                // Name under QR (like an ID badge)
-                Text(details.name,
-                     style: const TextStyle(
-                       fontFamily: 'PlusJakartaSans',
-                       fontSize: 15, fontWeight: FontWeight.w700,
-                       color: Color(0xFF0A0A0A),
-                     )),
-                if (details.company != null && details.company!.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(details.company!,
-                         style: const TextStyle(
-                           fontFamily: 'Inter', fontSize: 12,
-                           color: Color(0xFF6B6B6B),
-                         )),
+
+                const SizedBox(height: 16),
+
+                // Helper caption
+                const Text(
+                  "Anyone can scan this with Nebula to instantly save your details",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Inter', fontSize: 12.5,
+                    color: Color(0xFF6B6B6B), height: 1.5,
                   ),
+                ),
+
+                const SizedBox(height: 18),
+
+                // Action row: Share / Download / Fullscreen
+                Row(
+                  children: [
+                    Expanded(
+                      child: _QrActionButton(
+                        icon: LucideIcons.share2,
+                        label: "Share",
+                        onTap: () => _shareQrImage(context, qrString, details),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _QrActionButton(
+                        icon: LucideIcons.download,
+                        label: "Save",
+                        onTap: () => _saveQrToGallery(context, qrString),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _QrActionButton(
+                        icon: LucideIcons.maximize2,
+                        label: "Fullscreen",
+                        onTap: () => _showFullscreenQr(context, qrString, details),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Helper caption
-          const Text(
-            "Anyone can scan this with Nebula to instantly save your details",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: 'Inter', fontSize: 12.5,
-              color: Color(0xFF6B6B6B), height: 1.5,
-            ),
-          ),
-
-          const SizedBox(height: 18),
-
-          // Action row: Share / Download / Fullscreen
-          Row(
-            children: [
-              Expanded(
-                child: _QrActionButton(
-                  icon: LucideIcons.share2,
-                  label: "Share",
-                  onTap: () => _shareQrImage(context, qrString, details),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _QrActionButton(
-                  icon: LucideIcons.download,
-                  label: "Save",
-                  onTap: () => _saveQrToGallery(context, qrString),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _QrActionButton(
-                  icon: LucideIcons.maximize2,
-                  label: "Fullscreen",
-                  onTap: () => _showFullscreenQr(context, qrString, details),
-                ),
-              ),
-            ],
           ),
         ],
       ),
