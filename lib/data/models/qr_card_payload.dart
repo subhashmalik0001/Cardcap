@@ -13,6 +13,7 @@ class QrCardPayload {
   final String? address;
   final String? linkedin;
   final String? twitter;
+  final String? cardImageUrl;
 
   QrCardPayload({
     this.version = 1,
@@ -25,6 +26,7 @@ class QrCardPayload {
     this.address,
     this.linkedin,
     this.twitter,
+    this.cardImageUrl,
   });
 
   // Convert to compact JSON map (short keys to keep QR dense)
@@ -39,6 +41,7 @@ class QrCardPayload {
     if (address != null && address!.isNotEmpty) 'a': address,
     if (linkedin != null && linkedin!.isNotEmpty) 'l': linkedin,
     if (twitter != null && twitter!.isNotEmpty) 'x': twitter,
+    if (cardImageUrl != null && cardImageUrl!.isNotEmpty) 'u': cardImageUrl,
   };
 
   factory QrCardPayload.fromJson(Map<String, dynamic> json) => QrCardPayload(
@@ -52,6 +55,7 @@ class QrCardPayload {
     address: json['a'],
     linkedin: json['l'],
     twitter: json['x'],
+    cardImageUrl: json['u'],
   );
 
   // Encode full URI string for QR generation
@@ -89,6 +93,7 @@ class QrCardPayload {
     linkedin: linkedin,
     twitter: twitter,
     createdAt: DateTime.now(),
+    cardImageUrl: cardImageUrl,
     scanMethod: 'qr',
     source: 'qr',
   );

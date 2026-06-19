@@ -68,7 +68,7 @@ class _MyCardDetailsScreenState extends State<MyCardDetailsScreen> {
       final provider = context.read<MyCardProvider>();
       provider.updateDetails(details);
       
-      Navigator.of(context).pushNamed('/my-card/designer');
+      Navigator.of(context, rootNavigator: true).pushNamed('/my-card/designer');
     }
   }
 

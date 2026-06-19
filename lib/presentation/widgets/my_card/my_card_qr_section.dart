@@ -11,8 +11,9 @@ import '../../../data/services/qr_card_service.dart';
 
 class MyCardQrSection extends StatelessWidget {
   final MyCardDetails details;
+  final String? cardImageUrl;
 
-  const MyCardQrSection({super.key, required this.details});
+  const MyCardQrSection({super.key, required this.details, this.cardImageUrl});
 
   Future<void> _shareQrImage(BuildContext context, String qrString, MyCardDetails details) async {
     try {
@@ -76,6 +77,7 @@ class MyCardQrSection extends StatelessWidget {
   void _showFullscreenQr(BuildContext context, String qrString, MyCardDetails details) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => Container(
@@ -198,7 +200,7 @@ class MyCardQrSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final qrString = QrCardService().generateSafeQrString(details);
+    final qrString = QrCardService().generateSafeQrString(details, cardImageUrl);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),

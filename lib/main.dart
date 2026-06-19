@@ -11,6 +11,8 @@ import 'presentation/screens/splash/splash_screen.dart';
 import 'presentation/screens/shell/shell_screen.dart';
 import 'presentation/screens/review/review_screen.dart';
 import 'presentation/screens/auth/login_screen.dart';
+import 'presentation/screens/my_card/my_card_details_screen.dart';
+import 'presentation/screens/my_card/card_designer_screen.dart';
 import 'data/models/business_card.dart';
 
 Future<void> main() async {
@@ -58,6 +60,8 @@ class NebulaApp extends StatelessWidget {
         '/': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
         '/shell': (context) => const ShellScreen(),
+        '/my-card/details': (context) => const MyCardDetailsScreen(),
+        '/my-card/designer': (context) => const CardDesignerScreen(),
       },
 
       onGenerateRoute: (settings) {

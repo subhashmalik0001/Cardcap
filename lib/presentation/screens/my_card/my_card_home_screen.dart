@@ -187,6 +187,7 @@ class _MyCardHomeScreenState extends State<MyCardHomeScreen> {
     HapticFeedback.mediumImpact();
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -349,7 +350,7 @@ class _MyCardHomeScreenState extends State<MyCardHomeScreen> {
               child: ElevatedButton(
                 onPressed: () {
                   HapticFeedback.mediumImpact();
-                  Navigator.of(context).pushNamed('/my-card/details');
+                  Navigator.of(context, rootNavigator: true).pushNamed('/my-card/details');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF6A3EEB),
@@ -451,7 +452,7 @@ class _MyCardHomeScreenState extends State<MyCardHomeScreen> {
                   variant: ModernButtonVariant.outlined,
                   onPressed: () {
                     HapticFeedback.lightImpact();
-                    Navigator.of(context).pushNamed('/my-card/details');
+                    Navigator.of(context, rootNavigator: true).pushNamed('/my-card/details');
                   },
                 ),
               ),
@@ -463,7 +464,7 @@ class _MyCardHomeScreenState extends State<MyCardHomeScreen> {
                   variant: ModernButtonVariant.ghost,
                   onPressed: () {
                     HapticFeedback.lightImpact();
-                    Navigator.of(context).pushNamed('/my-card/designer');
+                    Navigator.of(context, rootNavigator: true).pushNamed('/my-card/designer');
                   },
                 ),
               ),
@@ -471,7 +472,10 @@ class _MyCardHomeScreenState extends State<MyCardHomeScreen> {
           ),
           const SizedBox(height: 16),
           if (provider.details != null)
-            MyCardQrSection(details: provider.details!),
+            MyCardQrSection(
+              details: provider.details!,
+              cardImageUrl: provider.cardImageUrl,
+            ),
           const SizedBox(height: 120),
         ],
       ),

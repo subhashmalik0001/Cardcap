@@ -199,6 +199,21 @@ class _SmartScanScreenState extends State<SmartScanScreen> {
       await _controller?.stopImageStream();
       final XFile rawImage = await _controller!.takePicture();
 
+      // Check if this picture has a QR code!
+      final qrPayload = await _qrDetectorService.detectQrFromFile(rawImage.path);
+      if (qrPayload != null && mounted) {
+        final hasVibrator = await Vibration.hasVibrator();
+        if (hasVibrator == true) {
+          Vibration.vibrate(duration: 100);
+        }
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => QrScanResultScreen(payload: qrPayload),
+          ),
+        );
+        return;
+      }
+
       // Always open manual cropper UI to let user adjust bounds and verify card before OCR
       final croppedFile = await _showManualCropper(rawImage.path);
       if (croppedFile != null) {
@@ -225,6 +240,21 @@ class _SmartScanScreenState extends State<SmartScanScreen> {
       // Stop frame streaming while user interacts with cropper/result
       if (_controller != null && _controller!.value.isStreamingImages) {
         await _controller!.stopImageStream();
+      }
+
+      // Check if selected image has a QR code!
+      final qrPayload = await _qrDetectorService.detectQrFromFile(image.path);
+      if (qrPayload != null && mounted) {
+        final hasVibrator = await Vibration.hasVibrator();
+        if (hasVibrator == true) {
+          Vibration.vibrate(duration: 100);
+        }
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => QrScanResultScreen(payload: qrPayload),
+          ),
+        );
+        return;
       }
 
       final croppedFile = await _showManualCropper(image.path);

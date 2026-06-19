@@ -67,5 +67,28 @@ class QrDetectorService {
     );
   }
 
+  Future<QrCardPayload?> detectQrFromFile(String filePath) async {
+    try {
+      final inputImage = InputImage.fromFilePath(filePath);
+      final List<Barcode> barcodes = await _barcodeScanner.processImage(inputImage);
+
+      if (barcodes.isEmpty) return null;
+
+      for (final barcode in barcodes) {
+        final rawValue = barcode.rawValue;
+        if (rawValue != null) {
+          final payload = QrCardPayload.tryParse(rawValue);
+          if (payload != null) {
+            return payload; // Found valid Nebula QR!
+          }
+        }
+      }
+      return null;
+    } catch (e) {
+      print('QrDetectorService: Error processing static file: $e');
+      return null;
+    }
+  }
+
   void dispose() => _barcodeScanner.close();
 }

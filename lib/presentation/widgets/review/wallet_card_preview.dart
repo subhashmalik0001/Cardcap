@@ -15,6 +15,31 @@ class WalletCardPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (card.cardImageUrl != null && card.cardImageUrl!.isNotEmpty) {
+      return Container(
+        height: 200,
+        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+          boxShadow: AppColors.cardShadow,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+          child: Image.network(
+            card.cardImageUrl!,
+            height: 200,
+            width: double.infinity,
+            fit: BoxFit.fill,
+            errorBuilder: (context, error, stackTrace) =>
+                _buildDefaultWalletCard(),
+          ),
+        ),
+      );
+    }
+    return _buildDefaultWalletCard();
+  }
+
+  Widget _buildDefaultWalletCard() {
     return Container(
       height: 200,
       margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
